@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>수학천재 김서윤 오답노트 🌱</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="module" id="firebase-init">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdmJdIQ61Qwx_QGnbBwYm-6EthWUrPFDU",
+    authDomain: "yunimath-b7bf1.firebaseapp.com",
+    projectId: "yunimath-b7bf1",
+    storageBucket: "yunimath-b7bf1.firebasestorage.app",
+    messagingSenderId: "114842615388",
+    appId: "1:114842615388:web:411dcb1f7e017f8a84f099"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.__db = db;
+  window.__fb = { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, setDoc, getDoc };
+  window.__fbReady = true;
+  window.dispatchEvent(new Event("fbReady"));
+  setTimeout(() => window.dispatchEvent(new Event("fbReady")), 300);
+  setTimeout(() => window.dispatchEvent(new Event("fbReady")), 1000);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#faf8fc;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;}
+input,textarea,button{font-family:inherit;}
+button{-webkit-tap-highlight-color:transparent;}
+@media print{body{background:white!important;}#app-root{display:none!important;}#print-area{display:block!important;}}
+@media screen{#print-area{display:none;}}
+.print-page{width:210mm;height:297mm;padding:10mm 12mm;background:white;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:5mm;page-break-after:always;box-sizing:border-box;}
+.print-page:last-child{page-break-after:avoid;}
+.print-card{border:1.5px solid #ddd0f0;border-radius:6px;padding:7px;background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.print-card-meta{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px;align-items:center;}
+.print-badge{font-size:9px;font-weight:700;border-radius:4px;padding:1px 6px;}
+.print-card img{width:100%;object-fit:contain;border-radius:4px;display:block;max-height:150px;}
+.print-memo{font-size:9px;color:#7c5cb8;margin-top:4px;background:#ede5f8;border-radius:4px;padding:3px 6px;}
+.print-num{font-size:9px;color:#bbb;margin-top:4px;text-align:right;}
+</style>
+</head>
+<body>
+<div id="app-root"><div id="root"></div></div>
+<div id="print-area"></div>
+<div id="crop-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:480px;padding:16px;box-sizing:border-box;">
+    <div style="background:#fff;border-radius:16px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:700;font-size:15px;">✂️ 사진 크롭</span>
+        <button id="crop-cancel-btn" style="border:none;background:none;font-size:22px;cursor:pointer;color:#aaa;">✕</button>
+      </div>
+      <div style="background:#000;max-height:60vh;overflow:hidden;">
+        <img id="crop-img" style="max-width:100%;display:block;"/>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:10px;">
+        <button id="crop-confirm-btn" style="flex:1;background:linear-gradient(135deg,#9b7fd4,#5e3f9a);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+// ── 데이터 구조 ───────────────────────────────────────────────
+// curriculum = {
+//   "중2-1": {
+//     books: ["쎈","RPM"],
+//     chapters: {
+//       "I. 대단원": {
+//         mids: {
+//           "1. 중단원": { subs: ["소단원A","소단원B"] },
+//         }
+//       }
+//     }
+//   }
+// }
+
+// bookSubs: { "교재명": ["소단원A","소단원B"], ... }
+const DEFAULT_CURRICULUM={
+  "공통수학2":{books:["수학의정석","쎈","쎈B","RPM"],chapters:{
+    "Ⅰ. 도형의 방정식":{bookMids:{}},
+    "Ⅱ. 집합과 명제":{bookMids:{}},
+    "Ⅲ. 함수":{bookMids:{}},
+  }},
+  "공통수학1":{books:["수학의정석","쎈","쎈B","RPM"],chapters:{
+    "Ⅰ. 다항식":{bookMids:{}},
+    "Ⅱ. 방정식과 부등식":{bookMids:{}},
+    "Ⅲ. 경우의 수":{bookMids:{}},
+    "Ⅳ. 행렬":{bookMids:{}},
+  }},
+  "중2-1":{books:["에이플러스","블랙라벨","쎈","RPM"],chapters:{
+    "I. 수와 식":{bookMids:{}},
+    "II. 부등식":{bookMids:{}},
+    "III. 방정식":{bookMids:{}},
+    "IV. 함수":{bookMids:{}},
+  }},
+  "중2-2":{books:["에이플러스","블랙라벨","쎈","RPM"],chapters:{
+    "Ⅰ. 삼각형의 성질":{bookMids:{}},
+    "Ⅱ. 사각형의 성질":{bookMids:{}},
+    "Ⅲ. 입체도형":{bookMids:{}},
+    "Ⅳ. 피타고라스 정리":{bookMids:{}},
+    "Ⅴ. 확률":{bookMids:{}},
+  }},
+  "중3-1":{books:["에이플러스","블랙라벨","쎈","RPM"],chapters:{
+    "I. 제곱근과 실수":{bookMids:{}},
+    "II. 다항식의 곱셈과 인수분해":{bookMids:{}},
+    "III. 이차방정식":{bookMids:{}},
+    "IV. 함수":{bookMids:{}},
+  }},
+  "중3-2":{books:["에이플러스","블랙라벨","쎈","RPM"],chapters:{
+    "Ⅰ. 삼각비":{bookMids:{}},
+    "Ⅱ. 원의 성질":{bookMids:{}},
+    "Ⅲ. 통계":{bookMids:{}},
+  }},
+};
+// 구버전 mids[mid].bookSubs[book] → 신버전 bookMids[book][mid] 자동 마이그레이션
+function migrateCurriculum(cur){
+  const next=JSON.parse(JSON.stringify(cur));
+  Object.values(next).forEach(grade=>{
+    Object.values(grade.chapters||{}).forEach(ch=>{
+      if(ch.mids&&!ch.bookMids){
+        ch.bookMids={};
+        Object.entries(ch.mids).forEach(([mid,midData])=>{
+          Object.entries(midData.bookSubs||{}).forEach(([book,subs])=>{
+            if(!ch.bookMids[book])ch.bookMids[book]={};
+            ch.bookMids[book][mid]=subs||[];
+          });
+        });
+        delete ch.mids;
+      }
+      if(!ch.bookMids)ch.bookMids={};
+    });
+  });
+  return next;
+}
+
+const MT=[{id:"wrong",label:"모름",color:"#e07a7a",bg:"#fdeaea"},{id:"unsure",label:"애매함",color:"#d4a04a",bg:"#fef6e4"},{id:"calc",label:"계산실수",color:"#9b7fd4",bg:"#f2eeff"},{id:"solved",label:"확실히 풀림",color:"#5ab98a",bg:"#e6f7ef"}];
+const DIF=["A","B","C"];
+const C={bg:"#faf8fc",card:"#ffffff",hd:"#f0eaf8",a1:"#9b7fd4",a2:"#7c5cb8",a3:"#5e3f9a",tx:"#2d1f4a",sub:"#9a8ab0",br:"#ddd0f0"};
+// 복습 히스토리 결과 표시용
+const RH={wrong:{icon:"✗",color:"#e07a7a",bg:"#fdeaea",label:"틀림"},unsure:{icon:"△",color:"#d4a04a",bg:"#fef6e4",label:"애매"},calc:{icon:"!",color:"#9b7fd4",bg:"#f2eeff",label:"계산"},solved:{icon:"✓",color:"#5ab98a",bg:"#e6f7ef",label:"맞음"}};
+const STATUS={none:{label:"안함",color:"#ccc",bg:"#f5f5f5",icon:"○"},doing:{label:"진행중",color:"#d4a04a",bg:"#fff8e8",icon:"◐"},done:{label:"완료",color:"#5ab98a",bg:"#e8f7ef",icon:"●"}};
+
+const DEFAULT_GRADE_ORDER=Object.keys(DEFAULT_CURRICULUM);
+
+// ── Firebase ──────────────────────────────────────────────────
+async function saveCurriculum(cur,order){
+  if(!window.__fbReady)return;
+  try{const{doc,setDoc}=window.__fb;await setDoc(doc(window.__db,"settings","curriculum"),{data:JSON.stringify(cur),order:JSON.stringify(order||Object.keys(cur))});}
+  catch(e){console.error(e);}
+}
+async function loadCurriculum(){
+  if(!window.__fbReady)return null;
+  try{const{doc,getDoc}=window.__fb;const snap=await getDoc(doc(window.__db,"settings","curriculum"));if(snap.exists()){const d=snap.data();return{cur:migrateCurriculum(JSON.parse(d.data)),order:d.order?JSON.parse(d.order):null};}}
+  catch(e){console.error(e);}
+  return null;
+}
+
+// ── 크롭 모달 ─────────────────────────────────────────────────
+let __cropperInstance=null;
+function openCropModal(file, cb){
+  const modal=document.getElementById("crop-modal");
+  const cropImg=document.getElementById("crop-img");
+  const reader=new FileReader();
+  reader.onload=e=>{
+    cropImg.src=e.target.result;
+    modal.style.display="flex";
+    if(__cropperInstance){__cropperInstance.destroy();__cropperInstance=null;}
+    cropImg.onload=()=>{
+      __cropperInstance=new Cropper(cropImg,{
+        viewMode:1,
+        autoCropArea:0.9,
+        movable:true,
+        zoomable:true,
+        rotatable:false,
+        scalable:false,
+        responsive:true,
+      });
+    };
+    document.getElementById("crop-confirm-btn").onclick=()=>{
+      const canvas=__cropperInstance.getCroppedCanvas({maxWidth:800,maxHeight:800});
+      const result=canvas.toDataURL("image/jpeg",0.65);
+      modal.style.display="none";
+      __cropperInstance.destroy();__cropperInstance=null;
+      cb(result);
+    };
+    document.getElementById("crop-cancel-btn").onclick=()=>{
+      modal.style.display="none";
+      if(__cropperInstance){__cropperInstance.destroy();__cropperInstance=null;}
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressImage(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{const img=new Image();img.onload=()=>{const canvas=document.createElement("canvas");let w=img.width,h=img.height;if(w>800){h=Math.round(h*800/w);w=800;}canvas.width=w;canvas.height=h;canvas.getContext("2d").drawImage(img,0,0,w,h);cb(canvas.toDataURL("image/jpeg",0.65));};img.src=e.target.result;};
+  reader.readAsDataURL(file);
+}
+
+// ── 공통 UI ───────────────────────────────────────────────────
+function Dropdown({label,value,options,onChange}){
+  const[open,setOpen]=useState(false);const ref=useRef();
+  useEffect(()=>{const h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);document.addEventListener("touchstart",h);return()=>{document.removeEventListener("mousedown",h);document.removeEventListener("touchstart",h);};});
+  return(
+    <div ref={ref} style={{position:"relative",width:"100%"}}>
+      {label&&<div style={{fontSize:12,color:C.sub,marginBottom:4}}>{label}</div>}
+      <div onClick={()=>setOpen(o=>!o)} style={{width:"100%",borderRadius:10,border:`1.5px solid ${open?C.a1:C.br}`,padding:"9px 12px",fontSize:13,background:"#fff",color:C.tx,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{value||"—"}</span>
+        <span style={{fontSize:10,color:C.sub,marginLeft:6}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:"#fff",border:`1.5px solid ${C.a1}`,borderRadius:10,zIndex:999,boxShadow:"0 8px 24px rgba(155,127,212,.15)",maxHeight:220,overflowY:"auto",marginTop:4}}>
+        {options.map(opt=><div key={opt} onClick={()=>{onChange(opt);setOpen(false);}} style={{padding:"11px 14px",fontSize:13,color:opt===value?C.a2:C.tx,fontWeight:opt===value?700:400,background:opt===value?"#f0eaf8":"#fff",cursor:"pointer",borderBottom:`1px solid #ddd0f0`}}>{opt===value?"✓ ":""}{opt}</div>)}
+      </div>}
+    </div>
+  );
+}
+
+function FilterDrop({value,options,onChange,placeholder}){
+  const[open,setOpen]=useState(false);const ref=useRef();
+  useEffect(()=>{const h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);document.addEventListener("touchstart",h);return()=>{document.removeEventListener("mousedown",h);document.removeEventListener("touchstart",h);};});
+  const cur=options.find(o=>o.val===value);const lbl=cur?cur.label:placeholder;const active=value!=="all";
+  return(
+    <div ref={ref} style={{position:"relative",flexShrink:0}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{borderRadius:8,border:`1.5px solid ${active?C.a1:C.br}`,padding:"6px 10px",fontSize:11,fontWeight:600,background:active?"#f0eaf8":"#fff",color:active?C.a2:C.tx,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+        {lbl}<span style={{fontSize:9}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&<div style={{position:"absolute",top:"100%",left:0,background:"#fff",border:`1.5px solid ${C.a1}`,borderRadius:10,zIndex:999,boxShadow:"0 8px 24px rgba(155,127,212,.15)",maxHeight:200,overflowY:"auto",marginTop:4,minWidth:130}}>
+        {options.map(opt=><div key={opt.val} onClick={()=>{onChange(opt.val);setOpen(false);}} style={{padding:"10px 14px",fontSize:12,color:opt.val===value?C.a2:C.tx,fontWeight:opt.val===value?700:400,background:opt.val===value?"#f0eaf8":"#fff",cursor:"pointer",borderBottom:`1px solid #ddd0f0`,whiteSpace:"nowrap"}}>{opt.val===value?"✓ ":""}{opt.label}</div>)}
+      </div>}
+    </div>
+  );
+}
+
+function Tag({type}){const t=MT.find(m=>m.id===type);if(!t)return null;return<span style={{background:t.bg,color:t.color,border:`1.5px solid ${t.color}`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{t.label}</span>;}
+function DB({diff}){const c={A:["#b5e0f7","#4a9fc0"],B:["#d4efc0","#5a9a40"],C:["#f4d0e8","#c05080"]}[diff]||["#eee","#888"];return<span style={{background:c[0],color:c[1],borderRadius:8,padding:"1px 9px",fontSize:11,fontWeight:800}}>{diff}단계</span>;}
+
+function buildPrintHTML(cards){
+  const pages=[];
+  for(let i=0;i<cards.length;i+=4)pages.push(cards.slice(i,i+4));
+  return pages.map((pc,pi)=>{
+    const slots=Array(4).fill(null).map((_,i)=>pc[i]||null);
+    const ch=slots.map(card=>{
+      if(!card)return`<div style="border:1.5px dashed #e0e0e0;border-radius:6px;background:#fafafa;"></div>`;
+      const mt=MT.find(m=>m.id===card.mistakeType)||MT[0];
+      const dc={A:["#b5e0f7","#4a9fc0"],B:["#d4efc0","#5a9a40"],C:["#f4d0e8","#c05080"]}[card.difficulty]||["#eee","#888"];
+      return`<div class="print-card"><div class="print-card-meta"><span class="print-badge" style="background:#f0eaf8;color:#5e3f9a;">${card.grade}</span><span class="print-badge" style="background:#ede5f8;color:#7c5cb8;">${card.book}</span>${card.bigChapter?`<span class="print-badge" style="background:#f0f0f0;color:#666;">${card.bigChapter}</span>`:""} ${card.midChapter?`<span class="print-badge" style="background:#f5f5f5;color:#888;">${card.midChapter}</span>`:""} ${card.subChapter?`<span class="print-badge" style="background:#f9f9f9;color:#aaa;">${card.subChapter}</span>`:""}<span class="print-badge" style="background:${dc[0]};color:${dc[1]};">${card.difficulty}단계</span><span class="print-badge" style="background:${mt.bg};color:${mt.color};border:1px solid ${mt.color};">${mt.label}</span></div><div style="flex:1;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;padding-top:3px;"><img src="${card.img}" style="max-width:100%;object-fit:contain;border-radius:4px;"/></div>${card.memo?`<div class="print-memo">📝 ${card.memo}</div>`:""}<div class="print-num">${cards.indexOf(card)+1}번 · ${card.date}</div></div>`;
+    }).join("");
+    const hdr=pi===0?`<div style="grid-column:1/-1;border-bottom:1.5px solid #9b7fd4;padding-bottom:3px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;font-weight:900;color:#2d1f4a;">🌱 수학 오답 노트</span><span style="font-size:8px;color:#9a8ab0;">총 ${cards.length}문제 · ${new Date().toLocaleDateString("ko-KR")} 출력</span></div>`:`<div style="grid-column:1/-1;height:0;overflow:hidden;padding:0;margin:0;border:none;"></div>`;
+    return`<div class="print-page">${hdr}${ch}</div>`;
+  }).join("");
+}
+
+function doPrint(cards){
+  if(!cards.length){alert("프린트할 문제가 없어요!");return;}
+  const area=document.getElementById("print-area");
+  const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  area.innerHTML=buildPrintHTML(cards);
+  if(!isMobile){
+    window.print();
+    return;
+  }
+  // 모바일: 이미지로 저장
+  area.style.display="block";
+  const today=new Date().toLocaleDateString("ko-KR").replace(/\. /g,"").replace(/\./g,"");
+  html2canvas(area,{backgroundColor:"#ffffff",scale:1.5,useCORS:true,logging:false}).then(canvas=>{
+    area.style.display="none";
+    canvas.toBlob(blob=>{
+      if(!blob){alert("이미지 생성 실패");return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.download="오답노트_"+today+".png";
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+    },"image/png");
+  }).catch(e=>{area.style.display="none";alert("저장 실패: "+e.message);});
+}
+
+
+function Add({onAdd,onCancel,curriculum,gradeOrder}){
+  const grades=gradeOrder.filter(g=>curriculum[g]);
+  const[img,setImg]=useState(null);const[ai,setAi]=useState(null);const[at,setAt]=useState("");const[memo,setMemo]=useState("");
+  const[mt,setMt]=useState("wrong");const[dif,setDif]=useState("B");
+  const getBooks=g=>curriculum[g]?.books||[];
+  const getBigs=g=>Object.keys(curriculum[g]?.chapters||{});
+  const getMids=(g,big,book)=>Object.keys(curriculum[g]?.chapters?.[big]?.bookMids?.[book]||{});
+  const getSubs=(g,big,mid,book)=>curriculum[g]?.chapters?.[big]?.bookMids?.[book]?.[mid]||[];
+
+  const lastGr=localStorage.getItem("yuni_last_gr");
+  const initGr=(lastGr&&grades.includes(lastGr))?lastGr:(grades[0]||"");
+  const lastBk=localStorage.getItem("yuni_last_bk");
+  const initBk=(lastBk&&getBooks(initGr).includes(lastBk))?lastBk:(getBooks(initGr)[0]||"");
+
+  const[gr,setGr]=useState(initGr);
+  const[bk,setBk]=useState(initBk);
+  const lastBig=localStorage.getItem("yuni_last_big");
+  const initBig=(lastBig&&getBigs(initGr).includes(lastBig))?lastBig:(getBigs(initGr)[0]||"");
+  const lastMid=localStorage.getItem("yuni_last_mid");
+  const initMid=(lastMid&&getMids(initGr,initBig,initBk).includes(lastMid))?lastMid:(getMids(initGr,initBig,initBk)[0]||"");
+  const lastSub=localStorage.getItem("yuni_last_sub");
+  const initSub=(lastSub&&getSubs(initGr,initBig,initMid,initBk).includes(lastSub))?lastSub:(getSubs(initGr,initBig,initMid,initBk)[0]||"");
+  const[bigCh,setBigCh]=useState(initBig);
+  const[midCh,setMidCh]=useState(initMid);
+  const[subCh,setSubCh]=useState(initSub);
+  const[saving,setSaving]=useState(false);
+  const fr=useRef();const ar=useRef();const fcam=useRef();
+
+  useEffect(()=>{
+    const mids=getMids(gr,bigCh,bk);const m=mids[0]||"";setMidCh(m);localStorage.setItem("yuni_last_mid",m);
+    const s=getSubs(gr,bigCh,m,bk)[0]||"";setSubCh(s);localStorage.setItem("yuni_last_sub",s);
+  },[gr,bigCh,bk]);
+  useEffect(()=>{const s=getSubs(gr,bigCh,midCh,bk)[0]||"";setSubCh(s);localStorage.setItem("yuni_last_mid",midCh);localStorage.setItem("yuni_last_sub",s);},[midCh]);
+
+  const changeGr=g=>{setGr(g);localStorage.setItem("yuni_last_gr",g);const bs=getBooks(g);const nb=bs[0]||"";setBk(nb);localStorage.setItem("yuni_last_bk",nb);const bigs=getBigs(g);setBigCh(bigs[0]||"");};
+  const changeBig=b=>{setBigCh(b);localStorage.setItem("yuni_last_big",b);};
+
+  const inp={width:"100%",borderRadius:10,border:`1.5px solid ${C.br}`,padding:"9px 12px",fontSize:13,background:"#fff",color:C.tx};
+
+  const handleSave=async()=>{
+    if(!img)return alert("문제 사진을 추가해주세요!");
+    setSaving(true);
+    localStorage.setItem("yuni_last_gr",gr);
+    localStorage.setItem("yuni_last_bk",bk);
+    localStorage.setItem("yuni_last_big",bigCh);
+    localStorage.setItem("yuni_last_mid",midCh);
+    localStorage.setItem("yuni_last_sub",subCh);
+    const card={id:Date.now().toString(),img,answerImg:ai||null,answerText:at,memo,mistakeType:mt,difficulty:dif,grade:gr,book:bk,bigChapter:bigCh,midChapter:midCh,subChapter:subCh,date:new Date().toLocaleDateString("ko-KR"),reviewCount:0,lastReview:null,reviewHistory:[],createdAt:Date.now()};
+    try{const{collection,addDoc}=window.__fb;await addDoc(collection(window.__db,"cards"),card);onAdd();}
+    catch(e){console.error(e);alert("저장 실패: "+e.message);}
+    setSaving(false);
+  };
+
+  if(!grades.length)return<div style={{textAlign:"center",padding:40,color:C.sub}}>교재관리 탭에서 학기를 먼저 추가해주세요!</div>;
+  const bigs=getBigs(gr);const mids=getMids(gr,bigCh,bk);const subs=getSubs(gr,bigCh,midCh,bk);
+
+  return(
+    <div style={{background:C.card,borderRadius:22,padding:24,boxShadow:"0 6px 32px rgba(155,127,212,.12)",maxWidth:480,margin:"0 auto"}}>
+      <div style={{fontWeight:800,fontSize:18,marginBottom:20,color:C.tx}}>✏️ 오답 문제 추가</div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:5}}>문제 사진 *</div>
+        {img
+          ?<div style={{position:"relative",borderRadius:14,overflow:"hidden",border:`2px solid ${C.a1}`,background:"#f8f5fc"}} onClick={()=>fr.current.click()}>
+              <img src={img} style={{maxWidth:"100%",maxHeight:200,display:"block",borderRadius:10}}/>
+              <div style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,0.45)",borderRadius:8,padding:"3px 8px",fontSize:11,color:"#fff",cursor:"pointer"}}>다시 찍기</div>
+            </div>
+          :<div style={{display:"flex",gap:8}}>
+              <div onClick={()=>{fcam.current.click();}} style={{flex:1,border:`2px dashed ${C.br}`,borderRadius:14,minHeight:90,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"#f8f5fc",gap:4}}>
+                <div style={{fontSize:26}}>📷</div>
+                <div style={{fontSize:11,color:"#aaa"}}>카메라로 찍기</div>
+              </div>
+              <div onClick={()=>{fr.current.click();}} style={{flex:1,border:`2px dashed ${C.br}`,borderRadius:14,minHeight:90,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"#f8f5fc",gap:4}}>
+                <div style={{fontSize:26}}>🖼️</div>
+                <div style={{fontSize:11,color:"#aaa"}}>갤러리에서 선택</div>
+              </div>
+            </div>
+        }
+        <input ref={fcam} type="file" accept="image/*" capture="camera" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)openCropModal(f,setImg);}}/>
+        <input ref={fr} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)openCropModal(f,setImg);}}/>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        <div style={{flex:1}}><Dropdown label="학기" value={gr} options={grades} onChange={changeGr}/></div>
+        <div style={{flex:2}}><Dropdown label="문제집" value={bk} options={getBooks(gr)} onChange={v=>{setBk(v);localStorage.setItem("yuni_last_bk",v);const mids=getMids(gr,bigCh,v);const m=mids[0]||"";setMidCh(m);setSubCh(getSubs(gr,bigCh,m,v)[0]||"");}}/></div>
+      </div>
+      {bigs.length>0&&<div style={{marginBottom:12}}><Dropdown label="대단원" value={bigCh} options={bigs} onChange={changeBig}/></div>}
+      {mids.length>0&&<div style={{marginBottom:12}}><Dropdown label="중단원" value={midCh} options={mids} onChange={setMidCh}/></div>}
+      {subs.length>0&&<div style={{marginBottom:14}}><Dropdown label="소단원" value={subCh} options={subs} onChange={setSubCh}/></div>}
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:7}}>난이도</div>
+        <div style={{display:"flex",gap:8}}>{DIF.map(d=>{const s=dif===d;const dc={A:C.a2,B:C.a3,C:C.a1};return<button key={d} onClick={()=>setDif(d)} style={{flex:1,borderRadius:12,border:`2px solid ${s?dc[d]:C.br}`,background:s?dc[d]+"44":"#fff",color:s?C.tx:C.sub,fontWeight:800,fontSize:15,padding:"8px 0",cursor:"pointer"}}>{d}단계</button>;})}</div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:7}}>오답 유형</div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{MT.map(t=><button key={t.id} onClick={()=>setMt(t.id)} style={{border:`2px solid ${mt===t.id?t.color:C.br}`,background:mt===t.id?t.bg:"#fff",color:mt===t.id?t.color:C.sub,borderRadius:20,padding:"5px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{t.label}</button>)}</div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,color:C.sub,marginBottom:4}}>정답 / 풀이</div>
+        <textarea placeholder="정답이나 풀이 입력" value={at} onChange={e=>setAt(e.target.value)} style={{...inp,minHeight:55,resize:"vertical"}}/>
+        <div onClick={()=>ar.current.click()} style={{marginTop:7,border:ai?`2px solid ${C.a1}`:`2px dashed ${C.br}`,borderRadius:10,minHeight:52,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:"#f8f5fc"}}>
+          {ai?<img src={ai} style={{maxWidth:"100%",maxHeight:140,borderRadius:8}}/>:<span style={{color:"#ccc",fontSize:12}}>📷 풀이 사진 추가 (선택)</span>}
+        </div>
+        <input ref={ar} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)openCropModal(f,setAi);}}/>
+      </div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:12,color:C.sub,marginBottom:4}}>메모 (선택)</div>
+        <input placeholder="어디서 막혔는지 간단히" value={memo} onChange={e=>setMemo(e.target.value)} style={inp}/>
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onCancel} style={{flex:1,borderRadius:12,border:`1.5px solid ${C.br}`,background:"#fff",padding:"11px 0",fontWeight:700,fontSize:14,cursor:"pointer",color:C.sub}}>취소</button>
+        <button onClick={handleSave} disabled={saving} style={{flex:2,borderRadius:12,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"11px 0",fontWeight:800,fontSize:15,cursor:"pointer",opacity:saving?0.7:1}}>{saving?"저장 중...":"저장하기 🌱"}</button>
+      </div>
+    </div>
+  );
+}
+
+function Edit({card,onCancel,onSave,curriculum,gradeOrder}){
+  const grades=gradeOrder.filter(g=>curriculum[g]);
+  const getBooks=g=>curriculum[g]?.books||[];
+  const getBigs=g=>Object.keys(curriculum[g]?.chapters||{});
+  const getMids=(g,big,book)=>Object.keys(curriculum[g]?.chapters?.[big]?.bookMids?.[book]||{});
+  const getSubs=(g,big,mid,book)=>curriculum[g]?.chapters?.[big]?.bookMids?.[book]?.[mid]||[];
+
+  const[gr,setGr]=useState(card.grade||grades[0]||"");
+  const[bk,setBk]=useState(card.book||"");
+  const[bigCh,setBigCh]=useState(card.bigChapter||"");
+  const[midCh,setMidCh]=useState(card.midChapter||"");
+  const[subCh,setSubCh]=useState(card.subChapter||"");
+  const[mt,setMt]=useState(card.mistakeType||"wrong");
+  const[dif,setDif]=useState(card.difficulty||"B");
+  const[memo,setMemo]=useState(card.memo||"");
+  const[at,setAt]=useState(card.answerText||"");
+  const[ai,setAi]=useState(card.answerImg||null);
+  const[saving,setSaving]=useState(false);
+  const ar=useRef();
+
+  const inp={width:"100%",borderRadius:10,border:`1.5px solid ${C.br}`,padding:"9px 12px",fontSize:13,background:"#fff",color:C.tx};
+
+  const changeGr=g=>{setGr(g);const bs=getBooks(g);setBk(bs[0]||"");const bigs=getBigs(g);setBigCh(bigs[0]||"");setMidCh("");setSubCh("");};
+  const changeBig=b=>{setBigCh(b);const mids=getMids(gr,b,bk);const m=mids[0]||"";setMidCh(m);setSubCh(getSubs(gr,b,m,bk)[0]||"");};
+  const changeMid=m=>{setMidCh(m);setSubCh(getSubs(gr,bigCh,m,bk)[0]||"");};
+  const changeBk=b=>{setBk(b);const mids=getMids(gr,bigCh,b);const m=mids[0]||"";setMidCh(m);setSubCh(getSubs(gr,bigCh,m,b)[0]||"");};
+
+  const handleSave=async()=>{
+    setSaving(true);
+    const updated={...card,book:bk,grade:gr,bigChapter:bigCh,midChapter:midCh,subChapter:subCh,mistakeType:mt,difficulty:dif,memo,answerText:at,answerImg:ai||null};
+    try{
+      const{doc,updateDoc}=window.__fb;
+      await updateDoc(doc(window.__db,"cards",card.fireId),{book:bk,grade:gr,bigChapter:bigCh,midChapter:midCh,subChapter:subCh,mistakeType:mt,difficulty:dif,memo,answerText:at,answerImg:ai||null});
+      onSave(updated);
+    }catch(e){console.error(e);alert("저장 실패: "+e.message);}
+    setSaving(false);
+  };
+
+  const bigs=getBigs(gr);const mids=getMids(gr,bigCh,bk);const subs=getSubs(gr,bigCh,midCh,bk);
+
+  return(
+    <div style={{background:C.card,borderRadius:22,padding:24,boxShadow:"0 6px 32px rgba(155,127,212,.12)",maxWidth:480,margin:"0 auto"}}>
+      <div style={{fontWeight:800,fontSize:18,marginBottom:4,color:C.tx}}>✏️ 카드 수정</div>
+      <div style={{fontSize:11,color:C.sub,marginBottom:20}}>문제 사진 외 나머지는 다 바꿀 수 있어요</div>
+      <div style={{marginBottom:16,borderRadius:12,overflow:"hidden",border:`1.5px solid ${C.br}`}}>
+        <img src={card.img} style={{width:"100%",maxHeight:180,objectFit:"contain",display:"block",background:"#f8f5fc"}}/>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        <div style={{flex:1}}><Dropdown label="학기" value={gr} options={grades} onChange={changeGr}/></div>
+        <div style={{flex:2}}><Dropdown label="문제집" value={bk} options={getBooks(gr)} onChange={changeBk}/></div>
+      </div>
+      {bigs.length>0&&<div style={{marginBottom:12}}><Dropdown label="대단원" value={bigCh} options={bigs} onChange={changeBig}/></div>}
+      {mids.length>0&&<div style={{marginBottom:12}}><Dropdown label="중단원" value={midCh} options={mids} onChange={changeMid}/></div>}
+      {subs.length>0&&<div style={{marginBottom:14}}><Dropdown label="소단원" value={subCh} options={subs} onChange={setSubCh}/></div>}
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:7}}>난이도</div>
+        <div style={{display:"flex",gap:8}}>{DIF.map(d=>{const s=dif===d;const dc={A:C.a2,B:C.a3,C:C.a1};return<button key={d} onClick={()=>setDif(d)} style={{flex:1,borderRadius:12,border:`2px solid ${s?dc[d]:C.br}`,background:s?dc[d]+"44":"#fff",color:s?C.tx:C.sub,fontWeight:800,fontSize:15,padding:"8px 0",cursor:"pointer"}}>{d}단계</button>;})}</div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:7}}>오답 유형</div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{MT.map(t=><button key={t.id} onClick={()=>setMt(t.id)} style={{border:`2px solid ${mt===t.id?t.color:C.br}`,background:mt===t.id?t.bg:"#fff",color:mt===t.id?t.color:C.sub,borderRadius:20,padding:"5px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{t.label}</button>)}</div>
+      </div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:12,color:C.sub,marginBottom:4}}>정답 / 풀이 메모</div>
+        <textarea placeholder="정답이나 풀이 입력" value={at} onChange={e=>setAt(e.target.value)} style={{...inp,minHeight:55,resize:"vertical"}}/>
+        <div onClick={()=>ar.current.click()} style={{marginTop:7,border:ai?`2px solid ${C.a1}`:`2px dashed ${C.br}`,borderRadius:10,minHeight:52,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:"#f8f5fc",position:"relative"}}>
+          {ai?<><img src={ai} style={{maxWidth:"100%",maxHeight:140,borderRadius:8}}/><button onClick={e=>{e.stopPropagation();setAi(null);}} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.45)",border:"none",color:"#fff",borderRadius:"50%",width:22,height:22,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button></>:<span style={{color:"#ccc",fontSize:12}}>📷 풀이 사진 추가 (선택)</span>}
+        </div>
+        <input ref={ar} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)compressImage(f,setAi);e.target.value="";}}/>
+      </div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:12,color:C.sub,marginBottom:4}}>메모 (선택)</div>
+        <input placeholder="어디서 막혔는지 간단히" value={memo} onChange={e=>setMemo(e.target.value)} style={inp}/>
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onCancel} style={{flex:1,borderRadius:12,border:`1.5px solid ${C.br}`,background:"#fff",padding:"11px 0",fontWeight:700,fontSize:14,cursor:"pointer",color:C.sub}}>취소</button>
+        <button onClick={handleSave} disabled={saving} style={{flex:2,borderRadius:12,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"11px 0",fontWeight:800,fontSize:15,cursor:"pointer",opacity:saving?0.7:1}}>{saving?"저장 중...":"저장하기 🌱"}</button>
+      </div>
+    </div>
+  );
+}
+
+function Flash({card,onBack,onUpdate}){
+  const[rev,setRev]=useState(false);const[nt,setNt]=useState(card.mistakeType);
+  const handleUpdate=async()=>{
+    const entry={date:new Date().toLocaleDateString("ko-KR"),result:nt};
+    const newHistory=[...(card.reviewHistory||[]),entry];
+    try{const{doc,updateDoc}=window.__fb;await updateDoc(doc(window.__db,"cards",card.fireId),{mistakeType:nt,reviewCount:(card.reviewCount||0)+1,lastReview:new Date().toLocaleDateString("ko-KR"),reviewHistory:newHistory});}catch(e){console.error(e);}
+    onUpdate(card.id,nt,newHistory);
+  };
+  const hist=card.reviewHistory||[];
+  return(
+    <div style={{maxWidth:480,margin:"0 auto"}}>
+      <button onClick={onBack} style={{background:"none",border:"none",color:C.a2,fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:14}}>← 목록으로</button>
+      <div style={{background:C.card,borderRadius:20,padding:22,boxShadow:"0 4px 24px rgba(155,127,212,.10)",marginBottom:14}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,alignItems:"center"}}>
+          <span style={{background:C.hd,color:C.tx,borderRadius:8,padding:"2px 10px",fontSize:11,fontWeight:700}}>{card.grade}</span>
+          <span style={{background:"#e8f0d8",color:"#5e3f9a",borderRadius:8,padding:"2px 10px",fontSize:11,fontWeight:600}}>{card.book}</span>
+          {card.bigChapter&&<span style={{background:"#f0f0f0",color:"#666",borderRadius:8,padding:"2px 8px",fontSize:10}}>{card.bigChapter}</span>}
+          {card.midChapter&&<span style={{background:"#f5f5f5",color:"#888",borderRadius:8,padding:"2px 8px",fontSize:10}}>{card.midChapter}</span>}
+          {card.subChapter&&<span style={{color:C.sub,fontSize:10}}>{card.subChapter}</span>}
+          <DB diff={card.difficulty}/><Tag type={card.mistakeType}/>
+        </div>
+        <img src={card.img} style={{width:"100%",borderRadius:12,border:`1px solid ${C.br}`}}/>
+        {card.memo&&<div style={{marginTop:10,background:"#f0f5e8",borderRadius:10,padding:"8px 12px",fontSize:12,color:"#5a7035"}}>📝 {card.memo}</div>}
+        {hist.length>0&&<div style={{marginTop:12,borderTop:`1px solid ${C.br}`,paddingTop:12}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.sub,marginBottom:8}}>복습 기록</div>
+          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            {hist.map((h,i)=>{const r=RH[h.result]||RH.wrong;return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:10,fontWeight:700,color:"#fff",background:C.a1,borderRadius:5,padding:"1px 7px",minWidth:42,textAlign:"center"}}>복습{i+1}</span>
+                <span style={{fontSize:10,color:C.sub}}>{h.date}</span>
+                <span style={{fontSize:11,fontWeight:700,color:r.color,background:r.bg,borderRadius:12,padding:"1px 9px"}}>{r.icon} {r.label}</span>
+              </div>
+            );})}
+          </div>
+        </div>}
+      </div>
+      {!rev
+        ?<button onClick={()=>setRev(true)} style={{width:"100%",borderRadius:16,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"15px 0",fontWeight:800,fontSize:16,cursor:"pointer"}}>정답 / 풀이 보기 👀</button>
+        :<div style={{background:C.card,borderRadius:20,padding:20,boxShadow:"0 4px 20px rgba(155,127,212,.08)"}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.a2,marginBottom:10}}>정답 / 풀이</div>
+          {card.answerText&&<div style={{fontSize:14,color:C.tx,marginBottom:card.answerImg?10:0,lineHeight:1.7}}>{card.answerText}</div>}
+          {card.answerImg&&<img src={card.answerImg} style={{width:"100%",borderRadius:10,border:`1px solid ${C.br}`}}/>}
+          {!card.answerText&&!card.answerImg&&<div style={{color:"#ccc",fontSize:13}}>저장된 풀이 없음</div>}
+          <div style={{marginTop:16,borderTop:`1px solid ${C.br}`,paddingTop:14}}>
+            <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:8}}>이번엔 어땠어요?</div>
+            <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>{MT.map(t=><button key={t.id} onClick={()=>setNt(t.id)} style={{border:`2px solid ${nt===t.id?t.color:C.br}`,background:nt===t.id?t.bg:"#fff",color:nt===t.id?t.color:C.sub,borderRadius:20,padding:"4px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{t.label}</button>)}</div>
+            <button onClick={handleUpdate} style={{width:"100%",borderRadius:12,border:"none",background:C.tx,color:"#fff",padding:"12px 0",fontWeight:700,fontSize:14,cursor:"pointer"}}>완료 ✓</button>
+          </div>
+        </div>
+      }
+    </div>
+  );
+}
+
+// ── 교재 관리 ─────────────────────────────────────────────────
+function CurriculumManager({curriculum,gradeOrder,onSave}){
+  const[newGrade,setNewGrade]=useState("");
+  const[expandedGrade,setExpandedGrade]=useState(null);
+  const[newBook,setNewBook]=useState({});
+  const[newBig,setNewBig]=useState({});
+  const[expandedBig,setExpandedBig]=useState({});
+  const[selBookTab,setSelBookTab]=useState({});// key: grade__big → book
+  const[newMid,setNewMid]=useState({});// key: grade__big__book → string
+  const[expandedMid,setExpandedMid]=useState({});
+  const[newSub,setNewSub]=useState({});// key: grade__big__book__mid → string
+  const[confirmDel,setConfirmDel]=useState(null);
+  const[confirmDelBook,setConfirmDelBook]=useState(null);
+  const[editBigKey,setEditBigKey]=useState(null);
+  const[editBigVal,setEditBigVal]=useState("");
+  const[editMidKey,setEditMidKey]=useState(null);
+  const[editMidVal,setEditMidVal]=useState("");
+  const[editSubKey,setEditSubKey]=useState(null);
+  const[editSubVal,setEditSubVal]=useState("");
+
+  const save=(nextCur,nextOrder)=>{onSave(nextCur,nextOrder||gradeOrder);};
+
+  const moveGrade=(grade,dir)=>{
+    const ord=[...gradeOrder];const i=ord.indexOf(grade);const j=i+dir;
+    if(j<0||j>=ord.length)return;[ord[i],ord[j]]=[ord[j],ord[i]];onSave(curriculum,ord);
+  };
+  const addGrade=()=>{
+    const g=newGrade.trim();if(!g)return;
+    if(curriculum[g])return alert("이미 있는 학기예요!");
+    save({...curriculum,[g]:{books:[],chapters:{}}},[...gradeOrder,g]);
+    setNewGrade("");setExpandedGrade(g);
+  };
+  const delGrade=g=>{
+    if(confirmDel===g){const next={...curriculum};delete next[g];save(next,gradeOrder.filter(k=>k!==g));setConfirmDel(null);}
+    else setConfirmDel(g);
+  };
+  const addBook=grade=>{
+    const b=(newBook[grade]||"").trim();if(!b)return;
+    if((curriculum[grade].books||[]).includes(b))return alert("이미 있는 교재예요!");
+    save({...curriculum,[grade]:{...curriculum[grade],books:[...curriculum[grade].books,b]}});
+    setNewBook(p=>({...p,[grade]:""}));
+  };
+  const delBook=(grade,book)=>{
+    const key=grade+"__"+book;
+    if(confirmDelBook===key){save({...curriculum,[grade]:{...curriculum[grade],books:curriculum[grade].books.filter(b=>b!==book)}});setConfirmDelBook(null);}
+    else setConfirmDelBook(key);
+  };
+
+  const addBig=grade=>{
+    const b=(newBig[grade]||"").trim();if(!b)return;
+    if(curriculum[grade].chapters[b])return alert("이미 있는 대단원이에요!");
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[b]:{bookMids:{}}}}});
+    setNewBig(p=>({...p,[grade]:""}));setExpandedBig(p=>({...p,[grade+"__"+b]:true}));
+  };
+  const delBig=(grade,big)=>{
+    if(!window.confirm(`"${big}" 대단원을 삭제할까요?`))return;
+    const next={...curriculum};const chs={...next[grade].chapters};delete chs[big];next[grade]={...next[grade],chapters:chs};save(next);
+  };
+
+  // 중단원 추가 (교재별)
+  const addMid=(grade,big,book)=>{
+    const key=grade+"__"+big+"__"+book;
+    const m=(newMid[key]||"").trim();if(!m)return;
+    const bm=curriculum[grade]?.chapters?.[big]?.bookMids||{};
+    if((bm[book]||{})[m]!==undefined)return alert("이미 있는 중단원이에요!");
+    const updBm={...bm,[book]:{...(bm[book]||{}),[m]:[]}};
+    const next={...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:updBm}}}};
+    save(next);setNewMid(p=>({...p,[key]:""}));
+    setExpandedMid(p=>({...p,[grade+"__"+big+"__"+book+"__"+m]:true}));
+  };
+  const delMid=(grade,big,book,mid)=>{
+    if(!window.confirm(`"${mid}" 중단원을 삭제할까요?`))return;
+    const bm=JSON.parse(JSON.stringify(curriculum[grade]?.chapters?.[big]?.bookMids||{}));
+    delete bm[book][mid];
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:bm}}}});
+  };
+
+  // 소단원 추가/삭제/수정
+  const addSub=(grade,big,book,mid)=>{
+    const key=grade+"__"+big+"__"+book+"__"+mid;
+    const s=(newSub[key]||"").trim();if(!s)return;
+    const bm=JSON.parse(JSON.stringify(curriculum[grade]?.chapters?.[big]?.bookMids||{}));
+    const subs=bm[book][mid]||[];
+    if(subs.includes(s))return alert("이미 있는 소단원이에요!");
+    bm[book][mid]=[...subs,s];
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:bm}}}});
+    setNewSub(p=>({...p,[key]:""}));
+  };
+  const delSub=(grade,big,book,mid,sub)=>{
+    const bm=JSON.parse(JSON.stringify(curriculum[grade]?.chapters?.[big]?.bookMids||{}));
+    bm[book][mid]=(bm[book][mid]||[]).filter(s=>s!==sub);
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:bm}}}});
+  };
+  const renameSub=(grade,big,book,mid,si,newName)=>{
+    const trimmed=newName.trim();if(!trimmed)return;
+    const bm=JSON.parse(JSON.stringify(curriculum[grade]?.chapters?.[big]?.bookMids||{}));
+    bm[book][mid][si]=trimmed;
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:bm}}}});
+    setEditSubKey(null);setEditSubVal("");
+  };
+  const renameBig=(grade,oldBig,newName)=>{
+    const trimmed=newName.trim();if(!trimmed||trimmed===oldBig){setEditBigKey(null);setEditBigVal("");return;}
+    if(curriculum[grade].chapters[trimmed])return alert("이미 있는 대단원이에요!");
+    const oldChs=curriculum[grade].chapters;const newChs={};
+    Object.keys(oldChs).forEach(k=>{newChs[k===oldBig?trimmed:k]=oldChs[k];});
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:newChs}});
+    setEditBigKey(null);setEditBigVal("");
+  };
+  const renameMid=(grade,big,book,oldMid,newName)=>{
+    const trimmed=newName.trim();if(!trimmed||trimmed===oldMid){setEditMidKey(null);setEditMidVal("");return;}
+    const bm=JSON.parse(JSON.stringify(curriculum[grade]?.chapters?.[big]?.bookMids||{}));
+    if(bm[book][trimmed]!==undefined)return alert("이미 있는 중단원이에요!");
+    const nb={};Object.keys(bm[book]).forEach(k=>{nb[k===oldMid?trimmed:k]=bm[book][k];});bm[book]=nb;
+    save({...curriculum,[grade]:{...curriculum[grade],chapters:{...curriculum[grade].chapters,[big]:{bookMids:bm}}}});
+    setEditMidKey(null);setEditMidVal("");
+  };
+
+  const iStyle={flex:1,borderRadius:8,border:`1.5px solid ${C.br}`,padding:"7px 10px",fontSize:12,color:C.tx,background:"#fff"};
+  const btnAdd={borderRadius:8,border:`1.5px solid ${C.a1}`,background:"#fff",color:C.a2,padding:"7px 12px",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"};
+
+  return(
+    <div style={{paddingBottom:40}}>
+      {/* 학기 추가 */}
+      <div style={{background:"#fff",borderRadius:14,padding:14,border:`1.5px solid ${C.br}`,marginBottom:14,boxShadow:"0 2px 8px rgba(155,127,212,.06)"}}>
+        <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:8}}>학기 추가</div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={newGrade} onChange={e=>setNewGrade(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addGrade()} placeholder="예: 중1-1, 고1" style={iStyle}/>
+          <button onClick={addGrade} style={{...btnAdd,background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",border:"none"}}>추가</button>
+        </div>
+      </div>
+
+      {gradeOrder.filter(g=>curriculum[g]).map((grade,gi)=>{
+        const isExp=expandedGrade===grade;
+        const bks=curriculum[grade].books||[];
+        const chs=curriculum[grade].chapters||{};
+        return(
+          <div key={grade} style={{background:"#fff",borderRadius:14,border:`1.5px solid ${C.br}`,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(155,127,212,.06)"}}>
+            <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",background:isExp?C.hd:"#fff"}} onClick={()=>setExpandedGrade(isExp?null:grade)}>
+              <span style={{fontSize:11,color:C.a1}}>{isExp?"▼":"▶"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:700,color:C.tx}}>{grade}</div>
+                <div style={{fontSize:10,color:C.sub,marginTop:1}}>{bks.length}개 교재 · {Object.keys(chs).length}개 대단원</div>
+              </div>
+              <div style={{display:"flex",gap:4,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>moveGrade(grade,-1)} disabled={gi===0} style={{borderRadius:6,border:`1px solid ${C.br}`,background:"#fff",color:gi===0?"#ddd":C.sub,padding:"3px 7px",fontSize:12,cursor:gi===0?"default":"pointer"}}>▲</button>
+                <button onClick={()=>moveGrade(grade,1)} disabled={gi===gradeOrder.length-1} style={{borderRadius:6,border:`1px solid ${C.br}`,background:"#fff",color:gi===gradeOrder.length-1?"#ddd":C.sub,padding:"3px 7px",fontSize:12,cursor:gi===gradeOrder.length-1?"default":"pointer"}}>▼</button>
+                <button onClick={()=>delGrade(grade)} style={{borderRadius:8,border:`1px solid ${confirmDel===grade?"#e07a7a":C.br}`,background:confirmDel===grade?"#fdeaea":"#fff",color:confirmDel===grade?"#e07a7a":C.sub,padding:"4px 10px",fontSize:11,cursor:"pointer",fontWeight:700}}>
+                  {confirmDel===grade?"정말 삭제?":"삭제"}
+                </button>
+              </div>
+            </div>
+
+            {isExp&&<div style={{borderTop:`1px solid ${C.br}`,padding:14}}>
+              {/* 교재 목록 */}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:8}}>📚 교재 목록</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                  {bks.map(b=>{const dKey=grade+"__"+b;const isDel=confirmDelBook===dKey;return(
+                    <div key={b} style={{display:"flex",alignItems:"center",gap:5,background:isDel?"#fdeaea":C.hd,borderRadius:20,padding:"4px 6px 4px 12px",border:`1.5px solid ${isDel?"#e07a7a":C.br}`,transition:"all 0.15s"}}>
+                      <span style={{fontSize:12,color:isDel?"#e07a7a":C.a2,fontWeight:600}}>{b}</span>
+                      {isDel
+                        ?<><button onClick={()=>delBook(grade,b)} style={{background:"#e07a7a",border:"none",color:"#fff",borderRadius:12,padding:"3px 9px",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>삭제확인</button>
+                          <button onClick={()=>setConfirmDelBook(null)} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",fontSize:14,padding:"0 4px"}}>✕</button></>
+                        :<button onClick={()=>setConfirmDelBook(dKey)} style={{background:"none",border:"none",color:"#bbb",cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 4px"}}>×</button>
+                      }
+                    </div>
+                  );})}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <input value={newBook[grade]||""} onChange={e=>setNewBook(p=>({...p,[grade]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addBook(grade)} placeholder="교재명 입력" style={iStyle}/>
+                  <button onClick={()=>addBook(grade)} style={btnAdd}>+ 추가</button>
+                </div>
+              </div>
+
+              {/* 단원 구성 */}
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:8}}>📖 단원 구성</div>
+                {bks.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:12,padding:"8px 12px",background:"#f4f0f8",borderRadius:10,border:`1px solid ${C.br}`}}>
+                  <span style={{fontSize:11,fontWeight:700,color:C.sub,marginRight:2,flexShrink:0}}>📚 교재:</span>
+                  {bks.map(b=>{const sb=selBookTab[grade]||(bks[0]||"");return(
+                    <button key={b} onClick={()=>setSelBookTab(p=>({...p,[grade]:b}))}
+                      style={{borderRadius:20,border:`1.5px solid ${sb===b?C.a1:C.br}`,background:sb===b?`linear-gradient(135deg,${C.a1},${C.a2})`:"#fff",color:sb===b?"#fff":C.sub,padding:"4px 14px",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                      {b}
+                    </button>
+                  );})}
+                </div>}
+                {Object.keys(chs).map(big=>{
+                  const bigExpKey=grade+"__"+big;
+                  const isBigExp=expandedBig[bigExpKey]!==false;
+                  const bookMids=chs[big]?.bookMids||{};
+                  const selBook=selBookTab[grade]||(bks[0]||"");
+                  const midsForBook=bookMids[selBook]||{};
+                  const midKeys=Object.keys(midsForBook);
+
+                  return(
+                    <div key={big} style={{borderRadius:10,border:`1px solid ${C.br}`,marginBottom:8,overflow:"hidden",background:"#faf8fc"}}>
+                      {/* 대단원 헤더 */}
+                      {editBigKey===bigExpKey
+                        ?<div style={{padding:"8px 10px",display:"flex",alignItems:"center",gap:6,background:"#f4f0f8"}}>
+                          <input autoFocus value={editBigVal} onChange={e=>setEditBigVal(e.target.value)}
+                            onKeyDown={e=>{if(e.key==="Enter")renameBig(grade,big,editBigVal);if(e.key==="Escape"){setEditBigKey(null);setEditBigVal("");}}}
+                            style={{flex:1,border:`1.5px solid ${C.a1}`,borderRadius:8,padding:"6px 10px",fontSize:12,color:C.tx,background:"#fff",outline:"none"}}/>
+                          <button onClick={()=>renameBig(grade,big,editBigVal)} style={{background:C.a1,border:"none",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0}}>저장</button>
+                          <button onClick={()=>{setEditBigKey(null);setEditBigVal("");}} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",fontSize:15,padding:"0 4px"}}>✕</button>
+                        </div>
+                        :<div style={{padding:"9px 12px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",background:"#f4f0f8"}} onClick={()=>setExpandedBig(p=>({...p,[bigExpKey]:!isBigExp}))}>
+                          <span style={{fontSize:10,color:C.a1,fontWeight:700}}>{isBigExp?"▼":"▶"}</span>
+                          <div style={{flex:1}}>
+                            <span style={{fontSize:12,fontWeight:700,color:C.tx}}>{big}</span>
+                          </div>
+                          <button onClick={e=>{e.stopPropagation();setEditBigKey(bigExpKey);setEditBigVal(big);}} style={{background:"none",border:"none",color:C.a1,cursor:"pointer",fontSize:14,padding:"2px 6px"}}>✏️</button>
+                          <button onClick={e=>{e.stopPropagation();delBig(grade,big);}} style={{background:"none",border:"none",color:"#c07070",cursor:"pointer",fontSize:11,padding:"2px 6px",fontWeight:700}}>삭제</button>
+                        </div>
+                      }
+
+                      {isBigExp&&<div style={{background:"#fff"}}>
+                        {/* 선택 교재의 중단원 목록 */}
+                        <div style={{border:`1px solid ${C.br}`,borderRadius:"0 0 8px 8px",padding:"10px 12px",marginTop:0}}>
+                          {midKeys.length===0&&<div style={{fontSize:11,color:"#ccc",padding:"4px 0",marginBottom:8}}>{selBook} 교재의 중단원을 추가해보세요</div>}
+                          {midKeys.map(mid=>{
+                            const midExpKey=grade+"__"+big+"__"+selBook+"__"+mid;
+                            const isMidExp=expandedMid[midExpKey]!==false;
+                            const subs=midsForBook[mid]||[];
+                            return(
+                              <div key={mid} style={{borderRadius:8,border:`1px solid ${editMidKey===midExpKey?C.a1:C.br}`,marginBottom:6,overflow:"hidden"}}>
+                                {editMidKey===midExpKey
+                                  ?<div style={{padding:"7px 10px",display:"flex",alignItems:"center",gap:6,background:"#f8f5fc"}}>
+                                    <input autoFocus value={editMidVal} onChange={e=>setEditMidVal(e.target.value)}
+                                      onKeyDown={e=>{if(e.key==="Enter")renameMid(grade,big,selBook,mid,editMidVal);if(e.key==="Escape"){setEditMidKey(null);setEditMidVal("");}}}
+                                      style={{flex:1,border:`1.5px solid ${C.a1}`,borderRadius:7,padding:"5px 9px",fontSize:12,color:C.tx,background:"#fff",outline:"none"}}/>
+                                    <button onClick={()=>renameMid(grade,big,selBook,mid,editMidVal)} style={{background:C.a1,border:"none",color:"#fff",borderRadius:7,padding:"5px 11px",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>저장</button>
+                                    <button onClick={()=>{setEditMidKey(null);setEditMidVal("");}} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",fontSize:14,padding:"0 3px"}}>✕</button>
+                                  </div>
+                                  :<div style={{padding:"7px 10px",display:"flex",alignItems:"center",gap:6,cursor:"pointer",background:isMidExp?"#f8f5fc":"#fff"}} onClick={()=>setExpandedMid(p=>({...p,[midExpKey]:!isMidExp}))}>
+                                    <span style={{fontSize:9,color:C.sub}}>{isMidExp?"▼":"▶"}</span>
+                                    <div style={{flex:1,fontSize:12,fontWeight:600,color:C.tx}}>{mid}</div>
+                                    <span style={{fontSize:10,color:C.sub}}>소단원 {subs.length}개</span>
+                                    <button onClick={e=>{e.stopPropagation();setEditMidKey(midExpKey);setEditMidVal(mid);}} style={{background:"none",border:"none",color:C.a1,cursor:"pointer",fontSize:13,padding:"0 5px"}}>✏️</button>
+                                    <button onClick={e=>{e.stopPropagation();delMid(grade,big,selBook,mid);}} style={{background:"none",border:"none",color:"#c07070",cursor:"pointer",fontSize:13,padding:"0 2px"}}>×</button>
+                                  </div>
+                                }
+                                {isMidExp&&<div style={{borderTop:`1px solid ${C.br}`,background:"#fdfcff",padding:"8px 10px"}}>
+                                  {subs.map((sub,si)=>{
+                                    const eKey=grade+"__"+big+"__"+selBook+"__"+mid+"__"+si;
+                                    const isEditing=editSubKey===eKey;
+                                    return(
+                                      <div key={si} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 6px",background:"#f8f6fc",borderRadius:6,border:`1px solid ${isEditing?C.a1:C.br}`,marginBottom:4}}>
+                                        <span style={{fontSize:10,color:C.sub,minWidth:16,flexShrink:0}}>{si+1}.</span>
+                                        {isEditing
+                                          ?<>
+                                            <input autoFocus value={editSubVal} onChange={e=>setEditSubVal(e.target.value)}
+                                              onKeyDown={e=>{if(e.key==="Enter")renameSub(grade,big,selBook,mid,si,editSubVal);if(e.key==="Escape"){setEditSubKey(null);setEditSubVal("");}}}
+                                              style={{flex:1,border:"none",background:"transparent",fontSize:12,color:C.tx,outline:"none",padding:0}}/>
+                                            <button onClick={()=>renameSub(grade,big,selBook,mid,si,editSubVal)} style={{background:C.a1,border:"none",color:"#fff",borderRadius:5,padding:"2px 8px",fontSize:11,cursor:"pointer",fontWeight:700}}>저장</button>
+                                            <button onClick={()=>{setEditSubKey(null);setEditSubVal("");}} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",fontSize:12,padding:"0 2px"}}>✕</button>
+                                          </>
+                                          :<>
+                                            <span style={{flex:1,fontSize:12,color:C.tx}}>{sub}</span>
+                                            <button onClick={()=>{setEditSubKey(eKey);setEditSubVal(sub);}} style={{background:"none",border:"none",color:C.a1,cursor:"pointer",fontSize:12,padding:"0 4px"}}>✏️</button>
+                                            <button onClick={()=>delSub(grade,big,selBook,mid,sub)} style={{background:"none",border:"none",color:"#c07070",cursor:"pointer",fontSize:14,padding:0}}>×</button>
+                                          </>
+                                        }
+                                      </div>
+                                    );
+                                  })}
+                                  <div style={{display:"flex",gap:6,marginTop:4}}>
+                                    <input value={newSub[grade+"__"+big+"__"+selBook+"__"+mid]||""} onChange={e=>setNewSub(p=>({...p,[grade+"__"+big+"__"+selBook+"__"+mid]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addSub(grade,big,selBook,mid)} placeholder="소단원 추가" style={{...iStyle,fontSize:11}}/>
+                                    <button onClick={()=>addSub(grade,big,selBook,mid)} style={{...btnAdd,fontSize:11,padding:"5px 9px"}}>+ 소단원</button>
+                                  </div>
+                                </div>}
+                              </div>
+                            );
+                          })}
+                          {/* 중단원 추가 */}
+                          <div style={{display:"flex",gap:6,marginTop:4}}>
+                            <input value={newMid[grade+"__"+big+"__"+selBook]||""} onChange={e=>setNewMid(p=>({...p,[grade+"__"+big+"__"+selBook]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addMid(grade,big,selBook)} placeholder={selBook+" 중단원 추가"} style={{...iStyle,fontSize:11}}/>
+                            <button onClick={()=>addMid(grade,big,selBook)} style={{...btnAdd,fontSize:11,padding:"5px 9px",borderColor:C.a2,color:C.a3}}>+ 중단원</button>
+                          </div>
+                        </div>
+                      </div>}
+                    </div>
+                  );
+                })}
+                {/* 대단원 추가 */}
+                <div style={{display:"flex",gap:8,marginTop:6}}>
+                  <input value={newBig[grade]||""} onChange={e=>setNewBig(p=>({...p,[grade]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addBig(grade)} placeholder="대단원 추가 (예: I. 수와 연산)" style={iStyle}/>
+                  <button onClick={()=>addBig(grade)} style={{...btnAdd,borderColor:C.a3,color:C.a3,padding:"7px 10px",fontSize:11}}>+ 대단원</button>
+                </div>
+              </div>
+            </div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProgressChecker({cards,curriculum,gradeOrder}){
+  const[progress,setProgress]=useState({});
+  const[fbReady,setFbReady]=useState(!!window.__fbReady);
+  const[loading,setLoading]=useState(true);
+  const grades=gradeOrder.filter(g=>curriculum[g]);
+  const[selGrade,setSelGrade]=useState(grades[0]||"");
+  const[selBook,setSelBook]=useState((curriculum[grades[0]]?.books||[])[0]||"");
+  const[openBigs,setOpenBigs]=useState({});
+  const[openMids,setOpenMids]=useState({});
+
+  useEffect(()=>{if(!fbReady){const h=()=>setFbReady(true);window.addEventListener("fbReady",h);return()=>window.removeEventListener("fbReady",h);}});
+  useEffect(()=>{
+    if(!fbReady)return;
+    const{doc,getDoc}=window.__fb;
+    getDoc(doc(window.__db,"progress","main")).then(snap=>{if(snap.exists())setProgress(snap.data());setLoading(false);}).catch(()=>setLoading(false));
+  },[fbReady]);
+  useEffect(()=>{
+    if(!grades.includes(selGrade)&&grades.length>0){setSelGrade(grades[0]);setSelBook((curriculum[grades[0]]?.books||[])[0]||"");}
+  },[curriculum,gradeOrder]);
+
+  const saveProgress=async(np)=>{if(!window.__fbReady)return;try{const{doc,setDoc}=window.__fb;await setDoc(doc(window.__db,"progress","main"),np);}catch(e){console.error(e);}};
+  const getRaw=(grade,book,big,mid,sub)=>progress[`${grade}__${book}__${big}__${mid}__${sub}`];
+  const getStatus=(grade,book,big,mid,sub)=>{const v=getRaw(grade,book,big,mid,sub);if(!v)return"none";if(typeof v==="string")return v;return v.status||"none";};
+  const getDate=(grade,book,big,mid,sub)=>{const v=getRaw(grade,book,big,mid,sub);if(!v||typeof v==="string")return null;return v.status==="done"?(v.doneDate||v.date||null):v.status==="doing"?(v.date||null):null;};
+  const setStatus=(grade,book,big,mid,sub,status)=>{
+    const key=`${grade}__${book}__${big}__${mid}__${sub}`;
+    const today=new Date().toLocaleDateString("ko-KR",{month:"2-digit",day:"2-digit"}).replace(". ","월 ").replace(".","일");
+    const prev=getRaw(grade,book,big,mid,sub);const prevObj=typeof prev==="object"&&prev?prev:{};
+    let entry;
+    if(status==="none")entry={status:"none",date:"",doneDate:""};
+    else if(status==="doing")entry={status:"doing",date:today,doneDate:prevObj.doneDate||""};
+    else entry={status:"done",doneDate:today,date:prevObj.date||today};
+    const next={...progress,[key]:entry};setProgress(next);saveProgress(next);
+  };
+  const nextStatus=s=>s==="none"?"doing":s==="doing"?"done":"none";
+  const getWrongCount=(grade,book,big,mid,sub)=>cards.filter(c=>c.grade===grade&&c.book===book&&c.bigChapter===big&&c.midChapter===mid&&c.subChapter===sub).length;
+
+  const getMids=(grade,book,big)=>Object.keys(curriculum[grade]?.chapters?.[big]?.bookMids?.[book]||{});
+  const getSubs=(grade,book,big,mid)=>curriculum[grade]?.chapters?.[big]?.bookMids?.[book]?.[mid]||[];
+
+  const calcRate=(grade,book)=>{
+    const chs=curriculum[grade]?.chapters||{};
+    let total=0,done=0,doing=0;
+    Object.keys(chs).forEach(big=>{
+      getMids(grade,book,big).forEach(mid=>{
+        getSubs(grade,book,big,mid).forEach(sub=>{total++;const s=getStatus(grade,book,big,mid,sub);if(s==="done")done++;if(s==="doing")doing++;});
+      });
+    });
+    return{total,done,doing,pct:total>0?Math.round(done/total*100):0};
+  };
+
+  const saveProgressImage=async()=>{
+    const today=new Date().toLocaleDateString("ko-KR");
+    const r=calcRate(selGrade,selBook);
+    const chs=curriculum[selGrade]?.chapters||{};
+    const BD="#e8e2f4",BIG_BG="#ede8f8",MID_BG="#f6f3fc";
+    let trs="";
+    Object.keys(chs).forEach(big=>{
+      const mids=getMids(selGrade,selBook,big);
+      let bigTotal=0,bigDone=0,bigDoing=0;
+      mids.forEach(mid=>getSubs(selGrade,selBook,big,mid).forEach(sub=>{bigTotal++;const s=getStatus(selGrade,selBook,big,mid,sub);if(s==="done")bigDone++;else if(s==="doing")bigDoing++;}));
+      trs+=`<tr style="background:${BIG_BG};"><td colspan="4" style="padding:7px 14px;font-weight:800;font-size:12px;color:#2d1f4a;border-bottom:2px solid #c8b8e0;">${big}<span style="float:right;font-size:10px;font-weight:600;color:#7c5cb8;">${bigDone}/${bigTotal} 완료${bigDoing>0?" · "+bigDoing+"진행":""}</span></td></tr>`;
+      mids.forEach(mid=>{
+        const subs=getSubs(selGrade,selBook,big,mid);if(!subs.length)return;
+        let midDone=0;subs.forEach(sub=>{if(getStatus(selGrade,selBook,big,mid,sub)==="done")midDone++;});
+        trs+=`<tr style="background:${MID_BG};"><td colspan="4" style="padding:5px 14px 5px 22px;font-weight:700;font-size:11px;color:#5e3f9a;border-bottom:1px solid ${BD};"> ${mid}<span style="font-size:10px;font-weight:400;color:#9a8ab0;margin-left:8px;">${midDone}/${subs.length}</span></td></tr>`;
+        subs.forEach((sub,si)=>{
+          const st=getStatus(selGrade,selBook,big,mid,sub);
+          const rv=getRaw(selGrade,selBook,big,mid,sub);
+          const startD=typeof rv==="object"&&rv?.date?rv.date:"-";
+          const doneD=typeof rv==="object"&&rv?.doneDate&&st==="done"?rv.doneDate:"-";
+          const wc=getWrongCount(selGrade,selBook,big,mid,sub);
+          const stColor=st==="done"?"#5ab98a":st==="doing"?"#d4a04a":"#bbb";
+          const stIcon=st==="done"?"✓":st==="doing"?"◐":"○";
+          const rowBg=st==="done"?"#f5fff8":st==="doing"?"#fffef2":"#ffffff";
+          trs+=`<tr style="background:${rowBg};border-bottom:1px solid ${si===subs.length-1?BD:"#f0eaf8"};"><td style="padding:5px 14px 5px 30px;font-size:11px;color:${st==="done"?"#3a9a6a":"#2d1f4a"};border-right:1px solid ${BD};"><span style="color:${stColor};margin-right:5px;font-weight:700;">${stIcon}</span>${sub}</td><td style="padding:5px 12px;font-size:10px;color:#9a8ab0;text-align:center;border-right:1px solid ${BD};white-space:nowrap;">${startD}</td><td style="padding:5px 12px;font-size:10px;color:${st==="done"?"#5ab98a":"#9a8ab0"};text-align:center;border-right:1px solid ${BD};white-space:nowrap;">${doneD}</td><td style="padding:5px 12px;font-size:10px;text-align:center;color:${wc>0?"#d05050":"#bbb"};font-weight:${wc>0?700:400};">${wc>0?wc+"개":"-"}</td></tr>`;
+        });
+      });
+    });
+    const el=document.createElement("div");
+    el.style.cssText="position:fixed;left:-9999px;top:0;width:520px;background:white;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;";
+    el.innerHTML=`<div style="background:white;padding:16px 20px 12px;border-bottom:2px solid #9b7fd4;"><div style="font-size:9px;color:#9b7fd4;letter-spacing:2px;margin-bottom:4px;font-weight:600;">수학천재 김서윤 🌱</div><div style="display:flex;align-items:flex-end;justify-content:space-between;"><div><div style="font-size:20px;font-weight:900;color:#5e3f9a;line-height:1.1;">${selGrade}</div><div style="font-size:12px;color:#7c5cb8;margin-top:3px;font-weight:600;">${selBook} · 진도 체크</div></div><div style="text-align:right;"><div style="font-size:28px;font-weight:900;color:#5e3f9a;line-height:1;">${r.pct}%</div><div style="font-size:9px;color:#9a8ab0;margin-top:2px;">${r.done}/${r.total} 완료 · ${today}</div></div></div><div style="margin-top:10px;background:#ede5f8;border-radius:99px;height:5px;overflow:hidden;"><div style="height:100%;width:${r.pct}%;background:linear-gradient(90deg,#9b7fd4,#5e3f9a);border-radius:99px;"></div></div></div><table style="width:100%;border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;"><thead><tr style="background:#f4f0f8;"><th style="padding:7px 14px;font-size:10px;color:#5e3f9a;text-align:left;font-weight:700;border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">단 원</th><th style="padding:7px 12px;font-size:10px;color:#5e3f9a;text-align:center;font-weight:700;border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">시작일</th><th style="padding:7px 12px;font-size:10px;color:#5e3f9a;text-align:center;font-weight:700;border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">완료일</th><th style="padding:7px 12px;font-size:10px;color:#5e3f9a;text-align:center;font-weight:700;border-bottom:2px solid #9b7fd4;">오답수</th></tr></thead><tbody>${trs}</tbody></table><div style="padding:5px 14px 7px;text-align:right;font-size:8px;color:#bbb;background:#faf8fc;border-top:1px solid ${BD};">${today} 출력</div>`;
+    document.body.appendChild(el);
+    try{const canvas=await html2canvas(el,{backgroundColor:"#ffffff",scale:2,useCORS:true,logging:false});canvas.toBlob(blob=>{if(!blob)return alert("이미지 생성 실패");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="진도체크_"+selGrade+"_"+selBook+"_"+today.replace(/\. /g,"").replace(/\./g,"")+".png";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),3000);},"image/png");}
+    catch(e){alert("이미지 저장 실패: "+e.message);}
+    finally{document.body.removeChild(el);}
+  };
+
+  if(loading)return<div style={{textAlign:"center",padding:"60px 0",color:C.sub,fontSize:14}}>불러오는 중... 🌱</div>;
+  if(!grades.length)return<div style={{textAlign:"center",padding:"60px 0",color:"#ccc",fontSize:13}}>교재관리 탭에서 학기를 먼저 추가해주세요 🌱</div>;
+
+  const books=curriculum[selGrade]?.books||[];
+  const chapters=curriculum[selGrade]?.chapters||{};
+  const rate=calcRate(selGrade,selBook);
+
+  return(
+    <div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+        {grades.map(g=>(
+          <button key={g} onClick={()=>{setSelGrade(g);const bs=curriculum[g]?.books||[];setSelBook(bs[0]||"");setOpenBigs({});setOpenMids({});}}
+            style={{borderRadius:20,border:`1.5px solid ${selGrade===g?C.a1:C.br}`,background:selGrade===g?C.hd:"#fff",color:selGrade===g?C.a2:C.sub,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            {g}
+          </button>
+        ))}
+      </div>
+      {books.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+        {books.map(b=>(
+          <button key={b} onClick={()=>setSelBook(b)}
+            style={{borderRadius:20,border:`1.5px solid ${selBook===b?C.a2:C.br}`,background:selBook===b?`linear-gradient(135deg,${C.a1},${C.a2})`:"#fff",color:selBook===b?"#fff":C.sub,padding:"5px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            {b}
+          </button>
+        ))}
+      </div>}
+
+      {selBook&&<div style={{background:"#fff",borderRadius:16,padding:"14px 16px",marginBottom:14,border:`1.5px solid ${C.br}`,boxShadow:"0 2px 10px rgba(155,127,212,.07)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontWeight:800,fontSize:14,color:C.tx}}>{selGrade} · {selBook}</div>
+          <div style={{fontWeight:900,fontSize:22,color:C.a2}}>{rate.pct}%</div>
+        </div>
+        <div style={{background:"#f0eaf8",borderRadius:99,height:10,overflow:"hidden",marginBottom:7}}>
+          <div style={{height:"100%",width:`${rate.pct}%`,background:`linear-gradient(90deg,${C.a1},${C.a2})`,borderRadius:99,transition:"width 0.4s"}}/>
+        </div>
+        <div style={{display:"flex",gap:12,fontSize:11}}>
+          <span style={{color:"#5ab98a",fontWeight:700}}>● 완료 {rate.done}</span>
+          <span style={{color:"#d4a04a",fontWeight:700}}>◐ 진행중 {rate.doing}</span>
+          <span style={{color:"#ccc",fontWeight:700}}>○ 안함 {rate.total-rate.done-rate.doing}</span>
+        </div>
+      </div>}
+
+      <button onClick={saveProgressImage} style={{width:"100%",borderRadius:12,border:`1.5px solid ${C.a1}`,background:"#fff",color:C.a2,padding:"10px 0",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+        🖼️ 진도표 이미지 저장
+      </button>
+
+      <div style={{display:"flex",flexDirection:"column",gap:8,paddingBottom:24}}>
+        {Object.keys(chapters).map(big=>{
+          const bigKey=`${selGrade}__${selBook}__${big}`;
+          const isBigOpen=openBigs[bigKey]!==false;
+          const mids=getMids(selGrade,selBook,big);
+          let bigTotal=0,bigDone=0,bigDoing=0;
+          mids.forEach(mid=>{getSubs(selGrade,selBook,big,mid).forEach(sub=>{bigTotal++;const s=getStatus(selGrade,selBook,big,mid,sub);if(s==="done")bigDone++;if(s==="doing")bigDoing++;});});
+          const allBigDone=bigTotal>0&&bigDone===bigTotal;const anyBigActive=bigDone>0||bigDoing>0;
+
+          return(
+            <div key={big} style={{background:"#fff",borderRadius:14,overflow:"hidden",border:`1.5px solid ${allBigDone?C.a1:anyBigActive?"#e0d0f0":C.br}`,boxShadow:"0 2px 8px rgba(155,127,212,.06)"}}>
+              <div onClick={()=>setOpenBigs(p=>({...p,[bigKey]:!isBigOpen}))} style={{padding:"11px 14px",background:allBigDone?C.hd:anyBigActive?"#f8f4fc":"#fff",display:"flex",alignItems:"center",cursor:"pointer",gap:10}}>
+                <span style={{fontSize:12,color:allBigDone?C.a2:anyBigActive?C.a1:C.sub}}>{isBigOpen?"▼":"▶"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:13,color:C.tx}}>{big}</div>
+                  <div style={{fontSize:10,color:C.sub}}>{bigDone}/{bigTotal} 완료{bigDoing>0?` · ${bigDoing}개 진행중`:""}</div>
+                </div>
+                <div style={{fontSize:11,fontWeight:800,color:allBigDone?C.a2:anyBigActive?C.a1:"#ccc"}}>{allBigDone?"✓완료":anyBigActive?"진행중":"미시작"}</div>
+              </div>
+
+              {isBigOpen&&<div style={{borderTop:`1px solid ${C.br}`}}>
+                {mids.map(mid=>{
+                  const midKey=`${selGrade}__${selBook}__${big}__${mid}`;
+                  const isMidOpen=openMids[midKey]!==false;
+                  const subs=getSubs(selGrade,selBook,big,mid);
+                  let midDone=0,midDoing=0;
+                  subs.forEach(sub=>{const s=getStatus(selGrade,selBook,big,mid,sub);if(s==="done")midDone++;if(s==="doing")midDoing++;});
+                  const allMidDone=subs.length>0&&midDone===subs.length;const anyMidActive=midDone>0||midDoing>0;
+
+                  return(
+                    <div key={mid} style={{borderBottom:`1px solid ${C.br}`}}>
+                      <div onClick={()=>setOpenMids(p=>({...p,[midKey]:!isMidOpen}))} style={{padding:"9px 14px 9px 22px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",background:allMidDone?"#f5fbf0":anyMidActive?"#fdfaff":"#fafafa"}}>
+                        <span style={{fontSize:10,color:allMidDone?"#5ab98a":anyMidActive?C.a1:C.sub}}>{isMidOpen?"▼":"▶"}</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:600,color:C.tx}}>{mid}</div>
+                          <div style={{fontSize:10,color:C.sub}}>{midDone}/{subs.length} 완료</div>
+                        </div>
+                        <div style={{fontSize:10,fontWeight:700,color:allMidDone?"#5ab98a":anyMidActive?C.a1:"#ccc"}}>{allMidDone?"✓":"·"}</div>
+                      </div>
+
+                      {isMidOpen&&subs.length>0&&<div style={{borderTop:`1px solid #f0eaf8`,background:"#fff"}}>
+                        {subs.map((sub,si)=>{
+                          const st=getStatus(selGrade,selBook,big,mid,sub);
+                          const dt=getDate(selGrade,selBook,big,mid,sub);
+                          const wc=getWrongCount(selGrade,selBook,big,mid,sub);
+                          const s=STATUS[st];
+                          return(
+                            <div key={si} style={{display:"flex",alignItems:"center",padding:"9px 14px 9px 22px",gap:8,borderBottom:si<subs.length-1?`1px solid #f5f0fc`:"none",background:st==="done"?"#fafff8":st==="doing"?"#fffef5":"#fff"}}>
+                              <span style={{fontSize:11,color:"#bbb",minWidth:20,flexShrink:0,textAlign:"right",fontWeight:600}}>{si+1}.</span>
+                              <button onClick={()=>setStatus(selGrade,selBook,big,mid,sub,nextStatus(st))}
+                                style={{width:28,height:28,borderRadius:"50%",border:`2px solid ${s.color}`,background:s.bg,color:s.color,fontSize:13,cursor:"pointer",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}}>
+                                {s.icon}
+                              </button>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:12,color:st==="done"?"#5ab98a":C.tx,fontWeight:st==="done"?600:400}}>{sub}</div>
+                                {dt&&<div style={{fontSize:10,color:st==="done"?"#5ab98a":C.a1,marginTop:1,opacity:0.8}}>
+                                  {st==="done"
+                                    ?(()=>{const v=getRaw(selGrade,selBook,big,mid,sub);const startD=typeof v==="object"&&v?.date?v.date:null;return startD&&startD!==dt?`${startD} ~ ${dt}`:`✓ ${dt}`;})()
+                                    :`◐ ${dt}`}
+                                </div>}
+                              </div>
+                              {wc>0&&<div style={{background:"#fdeaea",border:"1px solid #e07a7a",borderRadius:10,padding:"2px 7px",fontSize:10,color:"#e07a7a",fontWeight:700,flexShrink:0}}>📓{wc}</div>}
+                              <div style={{fontSize:10,color:s.color,fontWeight:700,flexShrink:0,minWidth:32,textAlign:"right"}}>{s.label}</div>
+                            </div>
+                          );
+                        })}
+                      </div>}
+                      {isMidOpen&&subs.length===0&&<div style={{padding:"8px 14px 8px 34px",fontSize:11,color:"#ccc",borderTop:`1px solid #f0eaf8`}}>교재관리에서 {selBook}·{mid} 소단원을 추가해주세요</div>}
+                    </div>
+                  );
+                })}
+                {mids.length===0&&<div style={{padding:"12px 14px",fontSize:11,color:"#ccc"}}>교재관리에서 {selBook} 교재의 중단원을 추가해주세요</div>}
+              </div>}
+            </div>
+          );
+        })}
+        {Object.keys(chapters).length===0&&<div style={{textAlign:"center",padding:"40px 0",color:"#ccc",fontSize:13}}>교재관리 탭에서 단원을 추가해주세요 📖</div>}
+      </div>
+    </div>
+  );
+}
+
+function AccuracyTracker({curriculum,gradeOrder}){
+  const[accData,setAccData]=useState({});
+  const[fbReady,setFbReady]=useState(!!window.__fbReady);
+  const[loading,setLoading]=useState(true);
+  const grades=gradeOrder.filter(g=>curriculum[g]);
+  const[selGrade,setSelGrade]=useState(grades[0]||"");
+  const[selBook,setSelBook]=useState((curriculum[grades[0]]?.books||[])[0]||"");
+  const[openBigs,setOpenBigs]=useState({});
+  const[chartView,setChartView]=useState(false);
+
+  useEffect(()=>{if(!fbReady){const h=()=>setFbReady(true);window.addEventListener("fbReady",h);return()=>window.removeEventListener("fbReady",h);}});
+  useEffect(()=>{
+    if(!fbReady)return;
+    const{doc,getDoc}=window.__fb;
+    getDoc(doc(window.__db,"settings","accuracy")).then(snap=>{
+      if(snap.exists()&&snap.data().data){try{setAccData(JSON.parse(snap.data().data));}catch(e){}}
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[fbReady]);
+  useEffect(()=>{
+    if(!grades.includes(selGrade)&&grades.length>0){
+      const g=grades[0];setSelGrade(g);setSelBook((curriculum[g]?.books||[])[0]||"");
+    }
+  },[curriculum,gradeOrder]);
+
+  const saveAcc=async(nd)=>{if(!window.__fbReady)return;try{const{doc,setDoc}=window.__fb;await setDoc(doc(window.__db,"settings","accuracy"),{data:JSON.stringify(nd)});}catch(e){console.error(e);}};
+
+  const ensurePath=(next,grade,book,big)=>{
+    if(!next[grade])next[grade]={};if(!next[grade][book])next[grade][book]={};
+    if(!next[grade][book][big])next[grade][book][big]={mids:{},final:{total:"",wrong:""}};
+    if(!next[grade][book][big].mids)next[grade][book][big].mids={};
+  };
+  const getVal=(grade,book,big,mid,diff)=>accData?.[grade]?.[book]?.[big]?.mids?.[mid]?.[diff]||{total:"",wrong:""};
+  const getFinal=(grade,book,big)=>accData?.[grade]?.[book]?.[big]?.final||{total:"",wrong:""};
+  const setVal=(grade,book,big,mid,diff,field,value)=>{
+    const num=value===""?"":Math.max(0,parseInt(value)||0);
+    const next=JSON.parse(JSON.stringify(accData));
+    ensurePath(next,grade,book,big);
+    if(!next[grade][book][big].mids[mid])next[grade][book][big].mids[mid]={};
+    if(!next[grade][book][big].mids[mid][diff])next[grade][book][big].mids[mid][diff]={total:"",wrong:""};
+    next[grade][book][big].mids[mid][diff][field]=num;
+    setAccData(next);saveAcc(next);
+  };
+  const setFinalVal=(grade,book,big,field,value)=>{
+    const num=value===""?"":Math.max(0,parseInt(value)||0);
+    const next=JSON.parse(JSON.stringify(accData));
+    ensurePath(next,grade,book,big);
+    next[grade][book][big].final={...next[grade][book][big].final,[field]:num};
+    setAccData(next);saveAcc(next);
+  };
+
+  // 교재관리에서 가져온 중단원 목록
+  const getMids=(grade,book,big)=>Object.keys(curriculum[grade]?.chapters?.[big]?.bookMids?.[book]||{});
+
+  const calcRate=(total,wrong)=>{const t=parseInt(total)||0;const w=parseInt(wrong)||0;if(t===0)return null;return Math.round(Math.max(0,t-w)/t*100);};
+  const rateColor=(pct)=>pct===null?"#bbb":pct>=90?"#5ab98a":pct>=70?"#d4a04a":"#e07a7a";
+  const rateBg=(pct)=>pct===null?"#f5f5f5":pct>=90?"#e8f7ef":pct>=70?"#fef6e4":"#fdeaea";
+
+  const calcMidTotals=(grade,book,big,mid)=>{
+    let t=0,w=0,any=false;
+    DIF.forEach(d=>{const v=getVal(grade,book,big,mid,d);const tv=parseInt(v.total)||0;const wv=parseInt(v.wrong)||0;if(tv>0)any=true;t+=tv;w+=wv;});
+    return any?{total:t,wrong:w}:null;
+  };
+  const calcBigTotals=(grade,book,big)=>{
+    let t=0,w=0,any=false;
+    getMids(grade,book,big).forEach(mid=>{DIF.forEach(d=>{const v=getVal(grade,book,big,mid,d);const tv=parseInt(v.total)||0;const wv=parseInt(v.wrong)||0;if(tv>0)any=true;t+=tv;w+=wv;});});
+    const fin=getFinal(grade,book,big);const ft=parseInt(fin.total)||0;const fw=parseInt(fin.wrong)||0;if(ft>0)any=true;t+=ft;w+=fw;
+    return any?{total:t,wrong:w}:null;
+  };
+
+  const numInp={width:44,borderRadius:7,border:"1.5px solid "+C.br,padding:"5px 4px",fontSize:12,textAlign:"center",background:"#fff",color:C.tx,outline:"none"};
+  const difColor={A:["#b5e0f7","#2a7fa0"],B:["#c8e8b0","#3a7a20"],C:["#f4d0e8","#a03060"]};
+
+  const saveAccImage=async()=>{
+    const today=new Date().toLocaleDateString("ko-KR");
+    const chs=curriculum[selGrade]?.chapters||{};
+    const rC=pct=>pct===null?"#999":pct>=90?"#3a9a6a":pct>=70?"#b88030":"#d05050";
+    const rBg=pct=>pct===null?"transparent":pct>=90?"#e4f7ec":pct>=70?"#fdf3e0":"#fde8e8";
+    const BD="#e4dff4";
+    const A_H="#d0e8f5",A_C="#edf5fb";
+    const B_H="#ceecd0",B_C="#ecf8ed";
+    const C_H="#f5d4ec",C_C="#fbeef7";
+    const S_H="#e0d8f2",S_C="#f2eefb";
+    const pBadge=(pct)=>pct!==null
+      ?`<span style="display:inline-block;background:${rBg(pct)};color:${rC(pct)};border-radius:20px;padding:2px 0;font-size:10px;font-weight:800;text-align:center;width:50px;line-height:1.6;">${pct}%</span>`
+      :`<span style="color:#ccc;font-size:10px;display:inline-block;width:50px;text-align:center;">-</span>`;
+    const mkCell=(tv,wv,pct,bg)=>tv>0
+      ?`<td style="padding:7px 10px;text-align:center;background:${bg};border-right:1px solid ${BD};vertical-align:middle;"><div style="font-size:9px;color:#9a8ab0;margin-bottom:4px;">${tv}문제 · 틀림 ${wv}</div><div style="display:flex;justify-content:center;">${pBadge(pct)}</div></td>`
+      :`<td style="padding:7px 10px;text-align:center;background:${bg};border-right:1px solid ${BD};color:#ddd;font-size:11px;">-</td>`;
+    let trs="";
+    Object.keys(chs).forEach(big=>{
+      const mids=getMids(selGrade,selBook,big);
+      const bigTot=calcBigTotals(selGrade,selBook,big);
+      const bigPct=bigTot?calcRate(bigTot.total,bigTot.wrong):null;
+      trs+=`<tr style="background:#ede8f8;"><td colspan="5" style="padding:7px 14px;font-weight:800;font-size:12px;color:#2d1f4a;border-bottom:2px solid #c8b8e0;">${big}${bigPct!==null?`<span style="float:right;display:inline-block;background:${rBg(bigPct)};color:${rC(bigPct)};border-radius:20px;padding:2px 12px;font-size:11px;font-weight:900;line-height:1.5;">${bigPct}%</span>`:""}${bigTot?`<span style="float:right;margin-right:8px;font-size:10px;font-weight:400;color:#9a8ab0;line-height:2;">총 ${bigTot.total}문제 · 틀림 ${bigTot.wrong}</span>`:""}</td></tr>`;
+      mids.forEach(mid=>{
+        const vA=getVal(selGrade,selBook,big,mid,"A"),vB=getVal(selGrade,selBook,big,mid,"B"),vC=getVal(selGrade,selBook,big,mid,"C");
+        const pA=calcRate(vA.total,vA.wrong),pB=calcRate(vB.total,vB.wrong),pC=calcRate(vC.total,vC.wrong);
+        const midTot=calcMidTotals(selGrade,selBook,big,mid);
+        const midPct=midTot?calcRate(midTot.total,midTot.wrong):null;
+        trs+=`<tr style="border-bottom:1px solid ${BD};"><td style="padding:7px 14px 7px 22px;font-weight:700;font-size:11px;color:#5e3f9a;background:white;border-right:1px solid ${BD};"> ${mid}</td>${mkCell(parseInt(vA.total)||0,parseInt(vA.wrong)||0,pA,A_C)}${mkCell(parseInt(vB.total)||0,parseInt(vB.wrong)||0,pB,B_C)}${mkCell(parseInt(vC.total)||0,parseInt(vC.wrong)||0,pC,C_C)}<td style="padding:7px 10px;text-align:center;background:${S_C};vertical-align:middle;">${midTot?`<div style="font-size:9px;color:#9a8ab0;margin-bottom:4px;">${midTot.total}문제 · 틀림 ${midTot.wrong}</div><div style="display:flex;justify-content:center;">${pBadge(midPct)}</div>`:`<div style="display:flex;justify-content:center;">${pBadge(null)}</div>`}</td></tr>`;
+      });
+      const fin=getFinal(selGrade,selBook,big);const finPct=calcRate(fin.total,fin.wrong);const ft=parseInt(fin.total)||0;
+      if(ft>0)trs+=`<tr style="background:#f5f0fc;border-bottom:1px solid ${BD};"><td colspan="4" style="padding:5px 14px 5px 22px;font-size:10px;color:#7c5cb8;font-style:italic;border-right:1px solid ${BD};">  📌 단원 마무리 · ${ft}문제</td><td style="padding:5px 10px;text-align:center;background:${S_C};"><div style="display:flex;justify-content:center;">${pBadge(finPct)}</div></td></tr>`;
+    });
+    const bp=bookPct;const bt=bookTotal;const bw=bookWrong;
+    const el=document.createElement("div");
+    el.style.cssText="position:fixed;left:-9999px;top:0;width:560px;background:white;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;";
+    el.innerHTML=`<div style="background:white;padding:16px 20px 12px;border-bottom:2px solid #9b7fd4;"><div style="font-size:9px;color:#9b7fd4;letter-spacing:2px;margin-bottom:4px;font-weight:600;">수학천재 김서윤 🌱</div><div style="display:flex;align-items:flex-end;justify-content:space-between;"><div><div style="font-size:20px;font-weight:900;color:#5e3f9a;line-height:1.1;">${selGrade}</div><div style="font-size:12px;color:#7c5cb8;margin-top:3px;font-weight:600;">${selBook} · 정답률</div></div><div style="text-align:right;">${bp!==null?`<div style="font-size:28px;font-weight:900;color:#5e3f9a;line-height:1;">${bp}%</div><div style="font-size:9px;color:#9a8ab0;margin-top:2px;">맞힘 ${bt-bw} · 틀림 ${bw} · 총 ${bt}문제</div>`:""}<div style="font-size:9px;color:#bbb;margin-top:2px;">${today}</div></div></div>${bp!==null?`<div style="margin-top:10px;background:#ede5f8;border-radius:99px;height:5px;overflow:hidden;"><div style="height:100%;width:${bp}%;background:linear-gradient(90deg,#9b7fd4,#5e3f9a);border-radius:99px;"></div></div>`:""}</div><table style="width:100%;border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;"><thead><tr><th style="padding:8px 14px;font-size:10px;color:#5e3f9a;text-align:left;font-weight:700;background:#f4f0f8;border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">단 원</th><th style="padding:8px 10px;font-size:10px;color:#2a7fa0;text-align:center;font-weight:700;background:${A_H};border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">A 단계</th><th style="padding:8px 10px;font-size:10px;color:#3a7a20;text-align:center;font-weight:700;background:${B_H};border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">B 단계</th><th style="padding:8px 10px;font-size:10px;color:#a03060;text-align:center;font-weight:700;background:${C_H};border-bottom:2px solid #9b7fd4;border-right:1px solid ${BD};">C 단계</th><th style="padding:8px 10px;font-size:10px;color:#5e3f9a;text-align:center;font-weight:700;background:${S_H};border-bottom:2px solid #9b7fd4;">합 계</th></tr></thead><tbody>${trs}</tbody></table><div style="padding:5px 14px 7px;text-align:right;font-size:8px;color:#bbb;background:#faf8fc;border-top:1px solid ${BD};">${today} 출력</div>`;
+    document.body.appendChild(el);
+    try{const canvas=await html2canvas(el,{backgroundColor:"#ffffff",scale:2,useCORS:true,logging:false});canvas.toBlob(blob=>{if(!blob)return alert("이미지 생성 실패");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="정답률_"+selGrade+"_"+selBook+"_"+today.replace(/\. /g,"").replace(/\./g,"")+".png";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),3000);},"image/png");}
+    catch(e){alert("이미지 저장 실패: "+e.message);}
+    finally{document.body.removeChild(el);}
+  };
+
+  if(loading)return<div style={{textAlign:"center",padding:"60px 0",color:C.sub,fontSize:14}}>불러오는 중... 🌱</div>;
+  if(!grades.length)return<div style={{textAlign:"center",padding:"60px 0",color:"#ccc",fontSize:13}}>교재관리 탭에서 학기를 먼저 추가해주세요 🌱</div>;
+
+  const books=curriculum[selGrade]?.books||[];
+  const chapters=curriculum[selGrade]?.chapters||{};
+
+  let bookTotal=0,bookWrong=0,bookAny=false;
+  if(selBook){
+    Object.keys(chapters).forEach(big=>{
+      getMids(selGrade,selBook,big).forEach(mid=>{
+        DIF.forEach(d=>{const v=getVal(selGrade,selBook,big,mid,d);const tv=parseInt(v.total)||0;const wv=parseInt(v.wrong)||0;if(tv>0)bookAny=true;bookTotal+=tv;bookWrong+=wv;});
+      });
+      const fin=getFinal(selGrade,selBook,big);const ft=parseInt(fin.total)||0;const fw=parseInt(fin.wrong)||0;if(ft>0)bookAny=true;bookTotal+=ft;bookWrong+=fw;
+    });
+  }
+  const bookPct=bookAny&&bookTotal>0?Math.round(Math.max(0,bookTotal-bookWrong)/bookTotal*100):null;
+  const bookCorrect=bookTotal-bookWrong;
+
+  return(
+    <div style={{paddingBottom:40}}>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        {grades.map(g=>(
+          <button key={g} onClick={()=>{setSelGrade(g);const bs=curriculum[g]?.books||[];setSelBook(bs[0]||"");setOpenBigs({});}}
+            style={{borderRadius:20,border:"1.5px solid "+(selGrade===g?C.a1:C.br),background:selGrade===g?C.hd:"#fff",color:selGrade===g?C.a2:C.sub,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            {g}
+          </button>
+        ))}
+      </div>
+      {books.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+        {books.map(b=>(
+          <button key={b} onClick={()=>{setSelBook(b);setOpenBigs({});}}
+            style={{borderRadius:20,border:"1.5px solid "+(selBook===b?C.a2:C.br),background:selBook===b?"linear-gradient(135deg,"+C.a1+","+C.a2+")":"#fff",color:selBook===b?"#fff":C.sub,padding:"5px 14px",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            {b}
+          </button>
+        ))}
+      </div>}
+
+      {!selBook&&<div style={{textAlign:"center",padding:"40px 0",color:"#ccc",fontSize:13}}>교재를 선택해주세요 📚</div>}
+
+      {selBook&&<>
+        {/* 교재 전체 정답률 카드 */}
+        <div style={{background:"#fff",borderRadius:16,padding:"14px 16px",marginBottom:14,border:"1.5px solid "+(bookPct!==null?(bookPct>=90?C.a1:bookPct>=70?"#d4c060":C.br):C.br),boxShadow:"0 2px 10px rgba(155,127,212,.08)"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:bookPct!==null?10:0}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:14,color:C.tx}}>{selGrade} · {selBook}</div>
+              {bookAny
+                ?<div style={{fontSize:11,color:C.sub,marginTop:2}}>총 {bookTotal}문제 · 맞힘 {bookCorrect} · 틀림 {bookWrong}</div>
+                :<div style={{fontSize:11,color:"#ccc",marginTop:2}}>아래 대단원을 펼쳐서 입력해주세요</div>
+              }
+            </div>
+            <div style={{fontWeight:900,fontSize:26,color:bookPct!==null?(bookPct>=90?"#5ab98a":bookPct>=70?"#d4a04a":"#e07a7a"):"#ddd"}}>
+              {bookPct!==null?bookPct+"%":"—"}
+            </div>
+          </div>
+          {bookPct!==null&&<>
+            <div style={{background:"#f0eaf8",borderRadius:99,height:8,overflow:"hidden",marginBottom:6}}>
+              <div style={{height:"100%",width:bookPct+"%",background:bookPct>=90?"linear-gradient(90deg,#5ab98a,#3d9a6a)":bookPct>=70?"linear-gradient(90deg,#d4a04a,#b88030)":"linear-gradient(90deg,#e07a7a,#c05050)",borderRadius:99,transition:"width 0.4s"}}/>
+            </div>
+            <div style={{display:"flex",gap:10,fontSize:10}}>
+              <span style={{color:"#5ab98a",fontWeight:700}}>● 맞힘 {bookCorrect}</span>
+              <span style={{color:"#e07a7a",fontWeight:700}}>✕ 틀림 {bookWrong}</span>
+              <span style={{color:"#aaa",fontWeight:600}}>전체 {bookTotal}문제</span>
+            </div>
+          </>}
+        </div>
+
+        <button onClick={saveAccImage} style={{width:"100%",borderRadius:12,border:`1.5px solid ${C.a1}`,background:"#fff",color:C.a2,padding:"10px 0",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          🖼️ 정답률 이미지 저장
+        </button>
+
+        <button onClick={()=>setChartView(v=>!v)} style={{width:"100%",borderRadius:12,border:`1.5px solid ${chartView?C.a1:C.br}`,background:chartView?C.hd:"#fff",color:chartView?C.a2:C.sub,padding:"10px 0",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          📈 {chartView?"그래프 숨기기":"꺾은선 그래프로 보기"}
+        </button>
+
+        {chartView&&(()=>{
+          const cd=[];
+          Object.keys(chapters).forEach(big=>{
+            getMids(selGrade,selBook,big).forEach(mid=>{
+              const vA=getVal(selGrade,selBook,big,mid,"A"),vB=getVal(selGrade,selBook,big,mid,"B"),vC=getVal(selGrade,selBook,big,mid,"C");
+              const pA=calcRate(vA.total,vA.wrong),pB=calcRate(vB.total,vB.wrong),pC=calcRate(vC.total,vC.wrong);
+              const mt=calcMidTotals(selGrade,selBook,big,mid);
+              const mp=mt?calcRate(mt.total,mt.wrong):null;
+              if(pA!==null||pB!==null||pC!==null)cd.push({name:mid.length>11?mid.slice(0,10)+"…":mid,pA,pB,pC,mp,big});
+            });
+          });
+          if(!cd.length)return<div style={{textAlign:"center",padding:"30px 0",color:"#ccc",fontSize:13,marginBottom:14}}>📊 정답 데이터를 먼저 입력해주세요</div>;
+          const W=Math.max(400,cd.length*52+80),H=270;
+          const PL=44,PR=16,PT=20,PB=80;
+          const cW=W-PL-PR,cH=H-PT-PB;
+          const n=cd.length;
+          const xP=i=>PL+(n>1?(i/(n-1))*cW:cW/2);
+          const yP=pct=>PT+cH-(pct/100)*cH;
+          const LINES=[{k:"pA",c:"#2a7fa0",l:"A단계"},{k:"pB",c:"#4a9a30",l:"B단계"},{k:"pC",c:"#c04070",l:"C단계"},{k:"mp",c:"#7c5cb8",l:"합계"}];
+          const mkPath=k=>{let d="",go=false;cd.forEach((p,i)=>{if(p[k]!==null){d+=(go?`L${xP(i)},${yP(p[k])}`:`M${xP(i)},${yP(p[k])}`);go=true;}else go=false;});return d;};
+          return(
+            <div style={{background:"#fff",borderRadius:16,padding:"16px 14px 12px",marginBottom:14,border:`1.5px solid ${C.br}`,boxShadow:"0 2px 10px rgba(155,127,212,.08)"}}>
+              <div style={{fontWeight:700,fontSize:13,color:C.tx,marginBottom:10}}>📈 정답률 추이 <span style={{fontSize:11,fontWeight:400,color:C.sub}}>· {selGrade} {selBook}</span></div>
+              <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                <svg width={W} height={H} style={{display:"block",minWidth:W}}>
+                  {[0,25,50,75,100].map(v=>(
+                    <g key={v}>
+                      <line x1={PL} y1={yP(v)} x2={W-PR} y2={yP(v)} stroke={v===0?"#ddd0f0":"#f0eaf8"} strokeWidth={v===0?1.5:1} strokeDasharray={v===0?"none":"4,3"}/>
+                      <text x={PL-5} y={yP(v)+4} textAnchor="end" fontSize="10" fill="#bbb">{v}</text>
+                    </g>
+                  ))}
+                  <text x={PL-5} y={PT+cH/2} textAnchor="middle" fontSize="9" fill="#ccc" transform={`rotate(-90,${PL-32},${PT+cH/2})`}>정답률 %</text>
+                  {cd.map((d,i)=>(
+                    <g key={i}>
+                      <line x1={xP(i)} y1={PT} x2={xP(i)} y2={PT+cH} stroke="#f8f4fc" strokeWidth="1"/>
+                      <text fontSize="9" fill="#9a8ab0" textAnchor="end" transform={`translate(${xP(i)},${PT+cH+12}) rotate(-42)`}>{d.name}</text>
+                    </g>
+                  ))}
+                  {LINES.map(({k,c})=>{const p=mkPath(k);return p?<path key={k} d={p} fill="none" stroke={c} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" opacity="0.85"/>:null;})}
+                  {LINES.map(({k,c})=>cd.map((d,i)=>d[k]!==null?(
+                    <g key={`${k}${i}`}>
+                      <circle cx={xP(i)} cy={yP(d[k])} r="4.5" fill={c} stroke="white" strokeWidth="2"/>
+                      {n<=7&&<text x={xP(i)} y={yP(d[k])-9} textAnchor="middle" fontSize="9" fill={c} fontWeight="700">{d[k]}%</text>}
+                    </g>
+                  ):null))}
+                  {LINES.map(({c,l},li)=>(
+                    <g key={li} transform={`translate(${PL+li*88},${H-16})`}>
+                      <line x1="0" y1="0" x2="18" y2="0" stroke={c} strokeWidth="2.5" strokeLinecap="round"/>
+                      <circle cx="9" cy="0" r="4" fill={c} stroke="white" strokeWidth="1.5"/>
+                      <text x="23" y="4" fontSize="10" fill="#666">{l}</text>
+                    </g>
+                  ))}
+                </svg>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* 중단원이 없을 때 안내 */}
+        {Object.keys(chapters).every(big=>getMids(selGrade,selBook,big).length===0)&&
+          <div style={{background:"#f0eaf8",borderRadius:12,padding:"10px 14px",marginBottom:14,fontSize:11,color:C.a2}}>
+            📝 교재관리 탭에서 <b>{selBook}</b> 교재의 중단원을 먼저 추가하면 여기에 자동으로 나타나요
+          </div>
+        }
+
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {Object.keys(chapters).map(big=>{
+            const bigKey=selGrade+"__"+selBook+"__"+big;
+            const isOpen=openBigs[bigKey]!==false;
+            const midsForBook=getMids(selGrade,selBook,big);
+            const bigTot=calcBigTotals(selGrade,selBook,big);
+            const bigPct=bigTot?calcRate(bigTot.total,bigTot.wrong):null;
+
+            return(
+              <div key={big} style={{background:"#fff",borderRadius:14,overflow:"hidden",border:"1.5px solid "+(bigPct!==null?(bigPct>=90?C.a1:bigPct>=70?"#d4c060":C.br):C.br),boxShadow:"0 2px 8px rgba(155,127,212,.07)"}}>
+                <div onClick={()=>setOpenBigs(p=>({...p,[bigKey]:!isOpen}))} style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",background:bigPct!==null?rateBg(bigPct):"#fff"}}>
+                  <span style={{fontSize:11,color:C.a1}}>{isOpen?"▼":"▶"}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:800,fontSize:13,color:C.tx}}>{big}</div>
+                    {bigTot
+                      ?<div style={{fontSize:10,color:C.sub,marginTop:1}}>총 {bigTot.total}문제 · 틀림 {bigTot.wrong}</div>
+                      :<div style={{fontSize:10,color:"#ccc",marginTop:1}}>중단원 {midsForBook.length}개</div>
+                    }
+                  </div>
+                  {bigPct!==null&&<div style={{background:rateColor(bigPct),color:"#fff",borderRadius:20,padding:"3px 10px",fontWeight:900,fontSize:13}}>{bigPct}%</div>}
+                </div>
+
+                {isOpen&&<div style={{borderTop:"1px solid "+C.br}}>
+                  {midsForBook.length===0&&<div style={{padding:"14px",fontSize:11,color:"#bbb",textAlign:"center"}}>교재관리에서 {selBook} 중단원을 추가해주세요</div>}
+                  {midsForBook.map((mid)=>{
+                    const midTot=calcMidTotals(selGrade,selBook,big,mid);
+                    const midPct=midTot?calcRate(midTot.total,midTot.wrong):null;
+                    return(
+                      <div key={mid} style={{borderBottom:"1px solid #f0eaf8"}}>
+                        <div style={{padding:"9px 14px 6px",background:"#faf8fc",display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{flex:1,fontWeight:700,fontSize:12,color:C.a3}}>{mid}</div>
+                          {midPct!==null&&<div style={{background:rateBg(midPct),border:"1.5px solid "+rateColor(midPct),color:rateColor(midPct),borderRadius:20,padding:"2px 9px",fontWeight:800,fontSize:11}}>합계 {midPct}%</div>}
+                        </div>
+                        <div style={{padding:"4px 14px 8px"}}>
+                          {DIF.map(diff=>{
+                            const v=getVal(selGrade,selBook,big,mid,diff);
+                            const pct=calcRate(v.total,v.wrong);
+                            const dc=difColor[diff];
+                            return(
+                              <div key={diff} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid #f5f0fc"}}>
+                                <span style={{background:dc[0],color:dc[1],borderRadius:7,padding:"2px 8px",fontSize:11,fontWeight:800,minWidth:38,textAlign:"center",flexShrink:0}}>{diff}단계</span>
+                                <div style={{display:"flex",alignItems:"center",gap:4,flex:1}}>
+                                  <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>총</span>
+                                  <input type="number" min="0" value={v.total} onChange={e=>setVal(selGrade,selBook,big,mid,diff,"total",e.target.value)} style={numInp} placeholder="0"/>
+                                  <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>개 틀림</span>
+                                  <input type="number" min="0" value={v.wrong} onChange={e=>setVal(selGrade,selBook,big,mid,diff,"wrong",e.target.value)} style={{...numInp,border:"1.5px solid "+(pct!==null&&pct<70?"#e07a7a":C.br)}} placeholder="0"/>
+                                  <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>개</span>
+                                </div>
+                                <div style={{background:rateBg(pct),border:"1px solid "+rateColor(pct),color:rateColor(pct),borderRadius:20,padding:"2px 9px",fontWeight:800,fontSize:12,minWidth:46,textAlign:"center",flexShrink:0}}>
+                                  {pct!==null?pct+"%":"—"}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {midTot&&<div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6,paddingTop:6}}>
+                            <span style={{fontSize:10,color:C.sub}}>합계 · {midTot.total}문제 중 {midTot.total-midTot.wrong}정답</span>
+                            <div style={{background:rateColor(midPct),color:"#fff",borderRadius:20,padding:"2px 10px",fontWeight:800,fontSize:12}}>{midPct}%</div>
+                          </div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* 대단원 문제 */}
+                  <div>
+                    <div style={{padding:"9px 14px 6px",background:"#f0eaf8"}}>
+                      <div style={{fontWeight:700,fontSize:12,color:C.a2}}>📌 대단원 문제</div>
+                    </div>
+                    <div style={{padding:"6px 14px 10px"}}>
+                      {(()=>{
+                        const fin=getFinal(selGrade,selBook,big);
+                        const pct=calcRate(fin.total,fin.wrong);
+                        return(
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>총</span>
+                            <input type="number" min="0" value={fin.total} onChange={e=>setFinalVal(selGrade,selBook,big,"total",e.target.value)} style={numInp} placeholder="0"/>
+                            <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>개 틀림</span>
+                            <input type="number" min="0" value={fin.wrong} onChange={e=>setFinalVal(selGrade,selBook,big,"wrong",e.target.value)} style={{...numInp,border:"1.5px solid "+(pct!==null&&pct<70?"#e07a7a":C.br)}} placeholder="0"/>
+                            <span style={{fontSize:10,color:C.sub,whiteSpace:"nowrap"}}>개</span>
+                            <div style={{background:rateBg(pct),border:"1px solid "+rateColor(pct),color:rateColor(pct),borderRadius:20,padding:"2px 9px",fontWeight:800,fontSize:12,minWidth:46,textAlign:"center",flexShrink:0}}>
+                              {pct!==null?pct+"%":"—"}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>}
+              </div>
+            );
+          })}
+          {Object.keys(chapters).length===0&&<div style={{textAlign:"center",padding:"60px 0",color:"#ccc",fontSize:13}}>교재관리 탭에서 단원을 추가해주세요 📖</div>}
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ── 공부 일기 ─────────────────────────────────────────────────
+async function saveDiaryEntry(entry){
+  if(!window.__fbReady)return null;
+  try{
+    const{collection,addDoc,doc,updateDoc}=window.__fb;
+    if(entry.fireId){
+      const ref=doc(window.__db,"diary",entry.fireId);
+      const{fireId,...data}=entry;
+      await updateDoc(ref,data);
+      return entry.fireId;
+    } else {
+      const ref=await addDoc(collection(window.__db,"diary"),entry);
+      return ref.id;
+    }
+  }catch(e){console.error(e);return null;}
+}
+async function deleteDiaryEntry(fireId){
+  if(!window.__fbReady)return;
+  try{const{doc,deleteDoc}=window.__fb;await deleteDoc(doc(window.__db,"diary",fireId));}
+  catch(e){console.error(e);}
+}
+
+function StudyDiary(){
+  const[entries,setEntries]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[view,setView]=useState("cal"); // "cal" | "list" | "write" | "detail"
+  const[selDate,setSelDate]=useState(null);
+  const[calMonth,setCalMonth]=useState(()=>{const d=new Date();return{y:d.getFullYear(),m:d.getMonth()};});
+  const[editEntry,setEditEntry]=useState(null);
+  const[saving,setSaving]=useState(false);
+
+  // 입력 폼 state
+  const today=new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\.\s*/g,"-").replace(/-$/,"");
+  const[formDate,setFormDate]=useState(today);
+  const[formGoals,setFormGoals]=useState([{text:"",done:false}]);
+  const[formMemo,setFormMemo]=useState("");
+
+  useEffect(()=>{
+    if(!window.__fbReady){
+      const h=()=>{if(window.__fbReady)loadDiary();};
+      window.addEventListener("fbReady",h);
+      const poll=setInterval(()=>{if(window.__fbReady){loadDiary();clearInterval(poll);}},500);
+      return()=>{window.removeEventListener("fbReady",h);clearInterval(poll);};
+    } else loadDiary();
+  },[]);
+
+  function loadDiary(){
+    const{collection,onSnapshot,query,orderBy}=window.__fb;
+    const q=query(collection(window.__db,"diary"),orderBy("createdAt","desc"));
+    onSnapshot(q,snap=>{
+      setEntries(snap.docs.map(d=>({...d.data(),fireId:d.id})));
+      setLoading(false);
+    },()=>setLoading(false));
+  }
+
+  function openWrite(date=null,existing=null){
+    if(existing){
+      setEditEntry(existing);
+      setFormDate(existing.date);
+      setFormGoals(existing.goals&&existing.goals.length>0?existing.goals:[{text:"",done:false}]);
+      setFormMemo(existing.memo||"");
+    } else {
+      setEditEntry(null);
+      const d=date||today;
+      setFormDate(d);
+      setFormGoals([{text:"",done:false}]);
+      setFormMemo("");
+    }
+    setView("write");
+  }
+
+  async function handleSave(){
+    if(formGoals.every(g=>!g.text.trim())&&!formMemo.trim())return alert("목표나 메모를 입력해주세요!");
+    setSaving(true);
+    const entry={
+      date:formDate,
+      goals:formGoals.filter(g=>g.text.trim()),
+      memo:formMemo,
+      createdAt:editEntry?editEntry.createdAt:Date.now(),
+      updatedAt:Date.now(),
+    };
+    if(editEntry?.fireId)entry.fireId=editEntry.fireId;
+    await saveDiaryEntry(entry);
+    setSaving(false);
+    setView("list");
+  }
+
+  async function handleDelete(e){
+    if(!window.confirm("이 기록을 삭제할까요?"))return;
+    await deleteDiaryEntry(e.fireId);
+    setView("list");
+  }
+
+  // 달력용 날짜 파싱
+  function parseDate(str){
+    // "2025. 06. 17" 또는 "2025-06-17" 형태 모두 처리
+    if(!str)return null;
+    const m=str.match(/(\d{4})[.\-\s]+(\d{1,2})[.\-\s]+(\d{1,2})/);
+    if(!m)return null;
+    return new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));
+  }
+
+  // 달력
+  function CalView(){
+    const{y,m}=calMonth;
+    const firstDay=new Date(y,m,1).getDay();
+    const daysInMonth=new Date(y,m+1,0).getDate();
+    const cells=[];
+    for(let i=0;i<firstDay;i++)cells.push(null);
+    for(let d=1;d<=daysInMonth;d++)cells.push(d);
+    const entryMap={};
+    entries.forEach(e=>{
+      const pd=parseDate(e.date);
+      if(pd&&pd.getFullYear()===y&&pd.getMonth()===m){
+        const day=pd.getDate();
+        if(!entryMap[day])entryMap[day]=[];
+        entryMap[day].push(e);
+      }
+    });
+    const todayD=new Date();
+    return(
+      <div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+          <button onClick={()=>setCalMonth(p=>{const nm=p.m-1<0?{y:p.y-1,m:11}:{y:p.y,m:p.m-1};return nm;})} style={{border:"none",background:"none",fontSize:22,cursor:"pointer",color:C.a2,padding:"4px 8px"}}>‹</button>
+          <span style={{fontWeight:800,fontSize:16,color:C.tx}}>{y}년 {m+1}월</span>
+          <button onClick={()=>setCalMonth(p=>{const nm=p.m+1>11?{y:p.y+1,m:0}:{y:p.y,m:p.m+1};return nm;})} style={{border:"none",background:"none",fontSize:22,cursor:"pointer",color:C.a2,padding:"4px 8px"}}>›</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:4}}>
+          {["일","월","화","수","목","금","토"].map(d=><div key={d} style={{textAlign:"center",fontSize:10,fontWeight:700,color:C.sub,padding:"4px 0"}}>{d}</div>)}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
+          {cells.map((d,i)=>{
+            if(!d)return<div key={"e"+i}/>;
+            const isToday=todayD.getFullYear()===y&&todayD.getMonth()===m&&todayD.getDate()===d;
+            const dayEntries=entryMap[d]||[];
+            const hasEntry=dayEntries.length>0;
+            const allDone=hasEntry&&dayEntries.every(e=>e.goals&&e.goals.length>0&&e.goals.every(g=>g.done));
+            const partial=hasEntry&&!allDone&&dayEntries.some(e=>e.goals&&e.goals.some(g=>g.done));
+            return(
+              <div key={d} onClick={()=>{
+                if(hasEntry){setSelDate({y,m,d,entries:dayEntries});setView("detail");}
+                else{const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;openWrite(ds);}
+              }} style={{
+                aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                borderRadius:10,cursor:"pointer",
+                background:isToday?C.a1:hasEntry?"#f0eaf8":"#fff",
+                border:`1.5px solid ${isToday?C.a1:hasEntry?C.a1:C.br}`,
+                position:"relative",gap:2,
+              }}>
+                <span style={{fontSize:13,fontWeight:isToday?900:hasEntry?700:400,color:isToday?"#fff":hasEntry?C.a2:C.tx}}>{d}</span>
+                {hasEntry&&<span style={{fontSize:9,color:isToday?"rgba(255,255,255,0.9)":allDone?"#5ab98a":partial?"#d4a04a":C.sub}}>{allDone?"✓":partial?"◐":"●"}</span>}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:12,fontSize:11,color:C.sub,justifyContent:"center"}}>
+          <span>● 기록있음</span><span style={{color:"#d4a04a"}}>◐ 일부달성</span><span style={{color:"#5ab98a"}}>✓ 목표달성</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 기록 카드
+  function DiaryCard({e,onClick}){
+    const totalGoals=e.goals?.length||0;
+    const doneGoals=e.goals?.filter(g=>g.done).length||0;
+    const pct=totalGoals>0?Math.round(doneGoals/totalGoals*100):null;
+    const pctColor=pct===null?"#ccc":pct===100?"#5ab98a":pct>=50?"#d4a04a":"#e07a7a";
+    return(
+      <div onClick={onClick} style={{background:C.card,borderRadius:16,padding:14,boxShadow:"0 2px 12px rgba(155,127,212,.08)",border:`1.5px solid ${C.br}`,cursor:"pointer",marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <span style={{fontWeight:800,fontSize:14,color:C.tx}}>{e.date}</span>
+          {pct!==null&&<span style={{fontSize:12,fontWeight:700,color:pctColor,background:pctColor+"18",borderRadius:20,padding:"2px 10px"}}>{pct===100?"🎉 ":""}{pct}% 달성</span>}
+        </div>
+        {e.goals&&e.goals.length>0&&<div style={{marginBottom:e.memo?8:0}}>
+          {e.goals.slice(0,3).map((g,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+              <span style={{fontSize:13,color:g.done?"#5ab98a":"#ccc"}}>{g.done?"✅":"⬜"}</span>
+              <span style={{fontSize:12,color:g.done?C.sub:C.tx,textDecoration:g.done?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.text}</span>
+            </div>
+          ))}
+          {e.goals.length>3&&<span style={{fontSize:11,color:C.sub}}>+{e.goals.length-3}개 더</span>}
+        </div>}
+        {e.memo&&<div style={{fontSize:11,color:C.sub,background:C.hd,borderRadius:8,padding:"5px 9px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📝 {e.memo}</div>}
+      </div>
+    );
+  }
+
+  // 상세 보기
+  if(view==="detail"&&selDate){
+    const e=selDate.entries[0];
+    const totalGoals=e.goals?.length||0;
+    const doneGoals=e.goals?.filter(g=>g.done).length||0;
+    const pct=totalGoals>0?Math.round(doneGoals/totalGoals*100):null;
+    const pctColor=pct===null?"#ccc":pct===100?"#5ab98a":pct>=50?"#d4a04a":"#e07a7a";
+    return(
+      <div style={{paddingBottom:30}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+          <button onClick={()=>setView("list")} style={{border:"none",background:"none",fontSize:22,cursor:"pointer",color:C.a2}}>←</button>
+          <span style={{fontWeight:800,fontSize:16,color:C.tx}}>{e.date}</span>
+        </div>
+        {pct!==null&&<div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,background:pctColor+"15",borderRadius:30,padding:"8px 20px",border:`1.5px solid ${pctColor}44`}}>
+            <span style={{fontSize:22,fontWeight:900,color:pctColor}}>{pct}%</span>
+            <span style={{fontSize:13,color:pctColor,fontWeight:700}}>{pct===100?"목표 달성! 🎉":pct>=50?"절반 이상 달성":"조금 더 힘내봐요 💪"}</span>
+          </div>
+        </div>}
+        {e.goals&&e.goals.length>0&&<div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 12px rgba(155,127,212,.08)",border:`1.5px solid ${C.br}`}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.sub,marginBottom:10}}>🎯 오늘의 목표</div>
+          {e.goals.map((g,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<e.goals.length-1?`1px solid ${C.br}`:"none"}}>
+              <span style={{fontSize:18,color:g.done?"#5ab98a":"#ddd"}}>{g.done?"✅":"⬜"}</span>
+              <span style={{fontSize:14,color:g.done?C.sub:C.tx,textDecoration:g.done?"line-through":"none",flex:1}}>{g.text}</span>
+            </div>
+          ))}
+        </div>}
+        {e.memo&&<div style={{background:C.card,borderRadius:16,padding:16,marginBottom:16,boxShadow:"0 2px 12px rgba(155,127,212,.08)",border:`1.5px solid ${C.br}`}}>
+          <div style={{fontWeight:700,fontSize:13,color:C.sub,marginBottom:8}}>📝 메모</div>
+          <div style={{fontSize:14,color:C.tx,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{e.memo}</div>
+        </div>}
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>openWrite(null,e)} style={{flex:1,borderRadius:12,border:`1.5px solid ${C.a1}`,background:"#fff",color:C.a2,padding:"11px 0",fontWeight:700,fontSize:14,cursor:"pointer"}}>✏️ 수정</button>
+          <button onClick={()=>handleDelete(e)} style={{flex:1,borderRadius:12,border:`1.5px solid #e07a7a`,background:"#fff",color:"#e07a7a",padding:"11px 0",fontWeight:700,fontSize:14,cursor:"pointer"}}>🗑️ 삭제</button>
+        </div>
+      </div>
+    );
+  }
+
+  // 작성/수정 폼
+  if(view==="write"){
+    return(
+      <div style={{background:C.card,borderRadius:22,padding:20,boxShadow:"0 6px 32px rgba(155,127,212,.12)"}}>
+        <div style={{fontWeight:800,fontSize:17,marginBottom:18,color:C.tx}}>{editEntry?"✏️ 기록 수정":"📖 공부 기록 작성"}</div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:5}}>날짜</div>
+          <input type="date" value={formDate.includes("-")&&formDate.length===10?formDate:""} onChange={e=>setFormDate(e.target.value)}
+            style={{width:"100%",borderRadius:10,border:`1.5px solid ${C.br}`,padding:"9px 12px",fontSize:13,color:C.tx}}/>
+        </div>
+        <div style={{marginBottom:14}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:700,color:C.sub}}>🎯 오늘의 목표</span>
+            <button onClick={()=>setFormGoals(p=>[...p,{text:"",done:false}])} style={{border:"none",background:C.hd,color:C.a2,borderRadius:8,padding:"3px 10px",fontSize:12,fontWeight:700,cursor:"pointer"}}>+ 추가</button>
+          </div>
+          {formGoals.map((g,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:7,marginBottom:7}}>
+              <button onClick={()=>setFormGoals(p=>p.map((x,j)=>j===i?{...x,done:!x.done}:x))}
+                style={{border:"none",background:"none",fontSize:20,cursor:"pointer",padding:0,flexShrink:0,color:g.done?"#5ab98a":"#ddd"}}>{g.done?"✅":"⬜"}</button>
+              <input value={g.text} onChange={e=>setFormGoals(p=>p.map((x,j)=>j===i?{...x,text:e.target.value}:x))}
+                placeholder={`목표 ${i+1}`}
+                style={{flex:1,borderRadius:10,border:`1.5px solid ${C.br}`,padding:"8px 11px",fontSize:13,color:C.tx}}/>
+              {formGoals.length>1&&<button onClick={()=>setFormGoals(p=>p.filter((_,j)=>j!==i))}
+                style={{border:"none",background:"none",fontSize:18,cursor:"pointer",color:"#ccc",padding:0,flexShrink:0}}>✕</button>}
+            </div>
+          ))}
+        </div>
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.sub,marginBottom:5}}>📝 자유 메모</div>
+          <textarea value={formMemo} onChange={e=>setFormMemo(e.target.value)}
+            placeholder="오늘 공부 어땠어? 어디가 어려웠는지, 느낀 점 등 자유롭게!"
+            style={{width:"100%",borderRadius:10,border:`1.5px solid ${C.br}`,padding:"10px 12px",fontSize:13,color:C.tx,minHeight:90,resize:"vertical"}}/>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setView("list")} style={{flex:1,borderRadius:12,border:`1.5px solid ${C.br}`,background:"#fff",padding:"11px 0",fontWeight:700,fontSize:14,cursor:"pointer",color:C.sub}}>취소</button>
+          <button onClick={handleSave} disabled={saving} style={{flex:2,borderRadius:12,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"11px 0",fontWeight:800,fontSize:15,cursor:"pointer",opacity:saving?0.7:1}}>{saving?"저장 중...":"저장하기 🌱"}</button>
+        </div>
+      </div>
+    );
+  }
+
+  // 메인 (달력 + 리스트)
+  if(loading)return<div style={{textAlign:"center",padding:"40px 0",color:C.sub,fontSize:14}}>불러오는 중... 🌱</div>;
+
+  const streakDays=(()=>{
+    const sorted=[...new Set(entries.map(e=>{const d=parseDate(e.date);return d?d.toDateString():null;}).filter(Boolean))].sort((a,b)=>new Date(b)-new Date(a));
+    if(!sorted.length)return 0;
+    let count=0;const today=new Date();today.setHours(0,0,0,0);
+    let cur=new Date(today);
+    for(const ds of sorted){const d=new Date(ds);d.setHours(0,0,0,0);if(d.getTime()===cur.getTime()){count++;cur.setDate(cur.getDate()-1);}else if(d<cur)break;}
+    return count;
+  })();
+
+  return(
+    <div style={{paddingBottom:30}}>
+      <div style={{display:"flex",gap:7,marginBottom:14}}>
+        {[{label:"총 기록",val:entries.length,color:C.a3},{label:"연속일수",val:streakDays+"일",color:"#e07a7a"},{label:"이번달",val:entries.filter(e=>{const d=parseDate(e.date);const n=new Date();return d&&d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();}).length,color:"#d4a04a"},{label:"목표달성",val:entries.filter(e=>e.goals&&e.goals.length>0&&e.goals.every(g=>g.done)).length,color:"#5ab98a"}].map(s=>(
+          <div key={s.label} style={{textAlign:"center",background:"rgba(255,255,255,0.85)",borderRadius:10,padding:"7px 4px",flex:1,boxShadow:"0 1px 6px rgba(155,127,212,.08)"}}>
+            <div style={{fontSize:15,fontWeight:900,color:s.color}}>{s.val}</div>
+            <div style={{fontSize:9,color:"#2d1f4a"}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:C.card,borderRadius:18,padding:16,marginBottom:16,boxShadow:"0 2px 12px rgba(155,127,212,.08)",border:`1.5px solid ${C.br}`}}>
+        <CalView/>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <span style={{fontWeight:700,fontSize:14,color:C.tx}}>📋 전체 기록 ({entries.length})</span>
+      </div>
+      {entries.length===0
+        ?<div style={{textAlign:"center",padding:"40px 0"}}><div style={{fontSize:40}}>📖</div><div style={{marginTop:10,fontSize:14,color:"#bbb"}}>아직 기록이 없어요</div><div style={{fontSize:12,marginTop:4,color:"#ccc"}}>달력에서 날짜를 눌러 기록해보세요!</div></div>
+        :entries.map(e=><DiaryCard key={e.fireId||e.createdAt} e={e} onClick={()=>{setSelDate({entries:[e]});setView("detail");}}/>)
+      }
+
+      <div style={{position:"fixed",bottom:28,right:24}}>
+        <button onClick={()=>openWrite()} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",fontSize:26,fontWeight:900,cursor:"pointer",boxShadow:"0 6px 22px rgba(155,127,212,.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+      </div>
+    </div>
+  );
+}
+
+// ── 시험 기록 ────────────────────────────────────────────────
+function ExamTracker({curriculum,gradeOrder}){
+  const[records,setRecords]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[fbReady,setFbReady]=useState(!!window.__fbReady);
+  const[showAdd,setShowAdd]=useState(false);
+  const[editTarget,setEditTarget]=useState(null); // 수정 중인 record
+  const[chartType,setChartType]=useState("both"); // "sun","adv","both"
+  const[viewMode,setViewMode]=useState("table"); // "table","chart"
+  const[chartFrom,setChartFrom]=useState(""); // "YYYY-MM"
+  const[chartTo,setChartTo]=useState("");     // "YYYY-MM"
+
+  // form state
+  const[fDate,setFDate]=useState(()=>new Date().toISOString().slice(0,10));
+  const[fLabel,setFLabel]=useState("");
+  const[fSunMy,setFSunMy]=useState("");
+  const[fSunTop,setFSunTop]=useState("");
+  const[fSunAvg,setFSunAvg]=useState("");
+  const[fAdvMy,setFAdvMy]=useState("");
+  const[fAdvTop,setFAdvTop]=useState("");
+  const[fAdvAvg,setFAdvAvg]=useState("");
+  const[fSunRank,setFSunRank]=useState("");
+  const[fSunTotal,setFSunTotal]=useState("");
+  const[fAdvRank,setFAdvRank]=useState("");
+  const[fAdvTotal,setFAdvTotal]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[delId,setDelId]=useState(null);
+  // 학년/단원 드랍다운 state (선행/심화 각각)
+  const[fSunGrade,setFSunGrade]=useState("");
+  const[fSunBig,setFSunBig]=useState("");
+  const[fSunMid,setFSunMid]=useState("");
+  const[fAdvGrade,setFAdvGrade]=useState("");
+  const[fAdvBig,setFAdvBig]=useState("");
+  const[fAdvMid,setFAdvMid]=useState("");
+
+  useEffect(()=>{
+    if(!fbReady){
+      const h=()=>setFbReady(true);
+      window.addEventListener("fbReady",h);
+      return()=>window.removeEventListener("fbReady",h);
+    }
+  },[fbReady]);
+
+  useEffect(()=>{
+    if(!fbReady)return;
+    const{collection,onSnapshot,query,orderBy}=window.__fb;
+    const q=query(collection(window.__db,"exams"),orderBy("createdAt","asc"));
+    const unsub=onSnapshot(q,snap=>{
+      setRecords(snap.docs.map(d=>({...d.data(),fireId:d.id})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[fbReady]);
+
+  const resetForm=()=>{
+    setFDate(new Date().toISOString().slice(0,10));
+    setFLabel("");setFSunMy("");setFSunTop("");setFSunAvg("");setFSunRank("");setFSunTotal("");
+    setFAdvMy("");setFAdvTop("");setFAdvAvg("");setFAdvRank("");setFAdvTotal("");
+    setFSunGrade("");setFSunBig("");setFSunMid("");
+    setFAdvGrade("");setFAdvBig("");setFAdvMid("");
+  };
+
+  const openEdit=(r)=>{
+    setEditTarget(r);
+    setFDate(r.date||new Date().toISOString().slice(0,10));
+    setFLabel(r.label||"");
+    setFSunMy(r.sun?.my!=null?String(r.sun.my):"");
+    setFSunTop(r.sun?.top!=null?String(r.sun.top):"");
+    setFSunAvg(r.sun?.avg!=null?String(r.sun.avg):"");
+    setFSunRank(r.sun?.rank!=null?String(r.sun.rank):"");
+    setFSunTotal(r.sun?.total!=null?String(r.sun.total):"");
+    setFAdvMy(r.adv?.my!=null?String(r.adv.my):"");
+    setFAdvTop(r.adv?.top!=null?String(r.adv.top):"");
+    setFAdvAvg(r.adv?.avg!=null?String(r.adv.avg):"");
+    setFAdvRank(r.adv?.rank!=null?String(r.adv.rank):"");
+    setFAdvTotal(r.adv?.total!=null?String(r.adv.total):"");
+    setFSunGrade(r.sun?.grade||"");
+    setFSunBig(r.sun?.bigChapter||"");
+    setFSunMid(r.sun?.midChapter||"");
+    setFAdvGrade(r.adv?.grade||"");
+    setFAdvBig(r.adv?.bigChapter||"");
+    setFAdvMid(r.adv?.midChapter||"");
+    setShowAdd(true);
+  };
+
+  const handleSave=async()=>{
+    if(!fDate)return alert("날짜를 입력해주세요");
+    if(!fSunMy&&!fAdvMy)return alert("점수를 하나 이상 입력해주세요");
+    setSaving(true);
+    const rec={
+      date:fDate,
+      label:fLabel,
+      sun:{my:fSunMy?Number(fSunMy):null,top:fSunTop?Number(fSunTop):null,avg:fSunAvg?Number(fSunAvg):null,rank:fSunRank?Number(fSunRank):null,total:fSunTotal?Number(fSunTotal):null,grade:fSunGrade,bigChapter:fSunBig,midChapter:fSunMid},
+      adv:{my:fAdvMy?Number(fAdvMy):null,top:fAdvTop?Number(fAdvTop):null,avg:fAdvAvg?Number(fAdvAvg):null,rank:fAdvRank?Number(fAdvRank):null,total:fAdvTotal?Number(fAdvTotal):null,grade:fAdvGrade,bigChapter:fAdvBig,midChapter:fAdvMid},
+    };
+    try{
+      if(editTarget){
+        const{doc,updateDoc}=window.__fb;
+        await updateDoc(doc(window.__db,"exams",editTarget.fireId),rec);
+      } else {
+        const{collection,addDoc}=window.__fb;
+        await addDoc(collection(window.__db,"exams"),{...rec,createdAt:Date.now()});
+      }
+      setShowAdd(false);setEditTarget(null);resetForm();
+    }catch(e){alert("저장 실패: "+e.message);}
+    setSaving(false);
+  };
+
+  const handleDel=async(fireId)=>{
+    if(!window.confirm("삭제할까요?"))return;
+    try{const{doc,deleteDoc}=window.__fb;await deleteDoc(doc(window.__db,"exams",fireId));}catch(e){alert("삭제 실패");}
+  };
+
+  const inp={width:"100%",borderRadius:10,border:`1.5px solid ${C.br}`,padding:"9px 12px",fontSize:14,background:"#fff",color:C.tx,outline:"none"};
+  const numInp={...inp,width:"100%",textAlign:"center"};
+
+  // 석차 추이 그래프 (상위 % 기준, y축 역전)
+  function RankChart({data}){
+    const pts=data.filter(r=>{
+      const sr=r.sun?.rank,st=r.sun?.total,ar=r.adv?.rank,at=r.adv?.total;
+      return (sr!=null&&st!=null&&st>0)||(ar!=null&&at!=null&&at>0);
+    });
+    if(pts.length<1)return(
+      <div style={{textAlign:"center",padding:"30px 0",color:C.sub,fontSize:13}}>
+        석차를 입력한 기록이 없어요 🌱<br/>
+        <span style={{fontSize:11,color:"#ccc"}}>시험 기록에서 등수 + 정원을 입력해주세요</span>
+      </div>
+    );
+
+    const W=340,H=210,PL=44,PR=20,PT=20,PB=52;
+    const iW=W-PL-PR,iH=H-PT-PB;
+
+    // 상위% 계산: 1등/20명 → (1-0/19)*100 = 100%, 마지막등 → 0에 가까워짐
+    // pct = (total - rank) / (total - 1) * 100  (total=1이면 100)
+    const toPct=(rank,total)=>total<=1?100:Math.round((total-rank)/(total-1)*100);
+
+    const sunPts=pts.map((r,i)=>{
+      const rank=r.sun?.rank,total=r.sun?.total;
+      return[i,rank!=null&&total!=null&&total>0?toPct(rank,total):null,rank,total];
+    });
+    const advPts=pts.map((r,i)=>{
+      const rank=r.adv?.rank,total=r.adv?.total;
+      return[i,rank!=null&&total!=null&&total>0?toPct(rank,total):null,rank,total];
+    });
+
+    const allPct=[...sunPts,...advPts].map(p=>p[1]).filter(v=>v!=null);
+    // y축: 항상 0~100 고정 (상위%)
+    const minV=0,maxV=100,range=100;
+    const n=pts.length;
+    const xPos=(i)=>PL+(i/(Math.max(n-1,1)))*iW;
+    const yPos=(pct)=>PT+iH-(pct/range)*iH;
+
+    const makePath=(points)=>{
+      const valid=points.filter(p=>p[1]!=null);
+      if(valid.length<2)return"";
+      return"M "+valid.map(p=>`${xPos(p[0]).toFixed(1)},${yPos(p[1]).toFixed(1)}`).join(" L ");
+    };
+
+    const yTicks=[0,25,50,75,100];
+    // 색상
+    const SUN_COLOR="#7c5cb8";
+    const ADV_COLOR="#27a06a";
+
+    return(
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",display:"block"}}>
+        {/* 상위50% 기준선 */}
+        <line x1={PL} x2={W-PR} y1={yPos(50)} y2={yPos(50)} stroke="#f0e8ff" strokeWidth="1.5" strokeDasharray="4,3"/>
+        <text x={PL-5} y={yPos(50)+4} textAnchor="end" fontSize="8" fill="#c4aaee">50%</text>
+        {/* grid */}
+        {yTicks.filter(v=>v!==50).map(v=>(
+          <g key={v}>
+            <line x1={PL} x2={W-PR} y1={yPos(v)} y2={yPos(v)} stroke="#ece6f5" strokeWidth="1"/>
+            <text x={PL-5} y={yPos(v)+4} textAnchor="end" fontSize="8.5" fill="#b0a0cc">{v}%</text>
+          </g>
+        ))}
+        {/* x축 라벨 — 이름 공백 기준 2줄 */}
+        {pts.map((r,i)=>{
+          const raw=r.label||(r.date?r.date.slice(5).replace("-","/"):"");
+          const spIdx=raw.indexOf(" ");
+          const line1=spIdx>-1?raw.slice(0,spIdx):raw;
+          const line2=spIdx>-1?raw.slice(spIdx+1):"";
+          const col=r.label?"#c05090":"#9a8ab0";
+          return(
+            <g key={i}>
+              <text x={xPos(i)} y={H-PB+11} textAnchor="middle" fontSize="9.5" fontWeight={r.label?"800":"400"} fill={col}>{line1}</text>
+              {line2&&<text x={xPos(i)} y={H-PB+22} textAnchor="middle" fontSize="9" fontWeight={r.label?"700":"400"} fill={col}>{line2}</text>}
+            </g>
+          );
+        })}
+        {/* 선행 선 */}
+        {makePath(sunPts)&&<path d={makePath(sunPts)} fill="none" stroke={SUN_COLOR} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>}
+        {/* 심화 선 */}
+        {makePath(advPts)&&<path d={makePath(advPts)} fill="none" stroke={ADV_COLOR} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>}
+        {/* 선행 점 + 라벨 */}
+        {sunPts.map((p,i)=>p[1]!=null&&(
+          <g key={"s"+i}>
+            <circle cx={xPos(p[0])} cy={yPos(p[1])} r="4.5" fill={SUN_COLOR} stroke="#fff" strokeWidth="1.5"/>
+            <text x={xPos(p[0])} y={yPos(p[1])-9} textAnchor="middle" fontSize="8.5" fontWeight="800" fill={SUN_COLOR}>
+              {p[2]}등/{p[3]}명
+            </text>
+          </g>
+        ))}
+        {/* 심화 점 + 라벨 */}
+        {advPts.map((p,i)=>p[1]!=null&&(
+          <g key={"a"+i}>
+            <circle cx={xPos(p[0])} cy={yPos(p[1])} r="4.5" fill={ADV_COLOR} stroke="#fff" strokeWidth="1.5"/>
+            <text x={xPos(p[0])} y={yPos(p[1])+18} textAnchor="middle" fontSize="8.5" fontWeight="800" fill={ADV_COLOR}>
+              {p[2]}등/{p[3]}명
+            </text>
+          </g>
+        ))}
+        {/* 범례 — 가운데 정렬 */}
+        {(()=>{
+          const items=[{color:SUN_COLOR,label:"📘 선행"},{color:ADV_COLOR,label:"📗 심화"}];
+          const itemW=70, totalW=itemW*items.length, startX=(W-totalW)/2;
+          return items.map((it,i)=>(
+            <g key={i} transform={`translate(${startX+i*itemW},${H-14})`}>
+              <line x1="0" x2="14" y1="5" y2="5" stroke={it.color} strokeWidth="2.5"/>
+              <circle cx="7" cy="5" r="3" fill={it.color} stroke="#fff" strokeWidth="1"/>
+              <text x="18" y="8.5" fontSize="9" fontWeight="700" fill={it.color}>{it.label}</text>
+            </g>
+          ));
+        })()}
+      </svg>
+    );
+  }
+
+    // SVG 꺾은선 그래프 - 선행/심화 각각 독립 표시
+  function LineChart({data,part}){
+    // part: "sun" | "adv"
+    const filtered=data.filter(r=>r[part]&&r[part].my!=null);
+    if(filtered.length<1)return<div style={{textAlign:"center",padding:"30px 0",color:C.sub,fontSize:13}}>데이터가 부족해요 🌱</div>;
+
+    const W=340,H=210,PL=40,PR=20,PT=20,PB=52;
+    const iW=W-PL-PR,iH=H-PT-PB;
+
+    const allVals=[];
+    filtered.forEach(r=>{
+      [r[part].my,r[part].top,r[part].avg].forEach(v=>{if(v!=null)allVals.push(v);});
+    });
+    const minV=Math.max(0,Math.floor(Math.min(...allVals)/10)*10-10);
+    const maxV=Math.min(100,Math.ceil(Math.max(...allVals)/10)*10+5);
+    const range=maxV-minV||1;
+    const xPos=(i,total)=>PL+(i/(Math.max(total-1,1)))*iW;
+    const yPos=(v)=>PT+iH-(((v-minV)/range)*iH);
+    const makePath=(pts)=>{
+      const valid=pts.filter(p=>p[1]!=null);
+      if(valid.length<2)return"";
+      return"M "+valid.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" L ");
+    };
+    const n=filtered.length;
+
+    // 색상 — 선행(보라계), 심화(초록계) 각각 내/최고/평균 3색
+    const palette=part==="sun"
+      ?{my:"#7c5cb8",top:"#e05fa0",avg:"#f0a030"}
+      :{my:"#27a06a",top:"#e05fa0",avg:"#f0a030"};
+
+    const myPts  =filtered.map((r,i)=>[xPos(i,n),r[part].my !=null?yPos(r[part].my ):null]);
+    const topPts =filtered.map((r,i)=>[xPos(i,n),r[part].top!=null?yPos(r[part].top):null]);
+    const avgPts =filtered.map((r,i)=>[xPos(i,n),r[part].avg!=null?yPos(r[part].avg):null]);
+
+    const LINES=[
+      {pts:myPts, color:palette.my, label:"내 점수", dash:"",    w:3},
+      {pts:topPts,color:palette.top,label:"최고점",  dash:"6,3", w:1.8},
+      {pts:avgPts,color:palette.avg,label:"평균",    dash:"2,4", w:1.8},
+    ];
+
+    const yTicks=[minV,minV+Math.round(range/4),minV+Math.round(range/2),minV+Math.round(range*3/4),maxV]
+      .filter((v,i,a)=>a.indexOf(v)===i);
+
+    return(
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",display:"block"}}>
+        {/* grid */}
+        {yTicks.map(v=>(
+          <g key={v}>
+            <line x1={PL} x2={W-PR} y1={yPos(v)} y2={yPos(v)} stroke="#ece6f5" strokeWidth="1"/>
+            <text x={PL-5} y={yPos(v)+4} textAnchor="end" fontSize="9" fill="#b0a0cc">{v}</text>
+          </g>
+        ))}
+        {/* x축 — 이름 공백 기준 2줄 분리, 날짜 생략 */}
+        {filtered.map((r,i)=>{
+          const raw=r.label||(r.date?r.date.slice(5).replace("-","/"):"");
+          const spIdx=raw.indexOf(" ");
+          const line1=spIdx>-1?raw.slice(0,spIdx):raw;
+          const line2=spIdx>-1?raw.slice(spIdx+1):"";
+          const col=r.label?"#5e3f9a":"#9a8ab0";
+          return(
+            <g key={i}>
+              <text x={xPos(i,n)} y={H-PB+11} textAnchor="middle" fontSize="9.5" fontWeight={r.label?"800":"400"} fill={col}>{line1}</text>
+              {line2&&<text x={xPos(i,n)} y={H-PB+22} textAnchor="middle" fontSize="9" fontWeight={r.label?"700":"400"} fill={col}>{line2}</text>}
+            </g>
+          );
+        })}
+        {/* 선 + 점 */}
+        {LINES.map((line,li)=>{
+          const path=makePath(line.pts);
+          return(
+            <g key={li}>
+              {path&&<path d={path} fill="none" stroke={line.color} strokeWidth={line.w} strokeDasharray={line.dash} strokeLinejoin="round" strokeLinecap="round"/>}
+              {line.pts.map((p,pi)=>p[1]!=null&&(
+                <circle key={pi} cx={p[0]} cy={p[1]} r={line.w>2?4:2.5} fill={line.color} stroke="#fff" strokeWidth="1.5"/>
+              ))}
+            </g>
+          );
+        })}
+        {/* 내 점수 수치 라벨 */}
+        {myPts.map((p,i)=>p[1]!=null&&(
+          <text key={"mv"+i} x={p[0]} y={p[1]-8} textAnchor="middle" fontSize="9.5" fontWeight="800" fill={palette.my}>{filtered[i][part].my}</text>
+        ))}
+        {/* 범례 — 가운데 정렬 */}
+        {(()=>{
+          const itemW=58, totalW=itemW*LINES.length, startX=(W-totalW)/2;
+          return LINES.map((line,li)=>(
+            <g key={"leg"+li} transform={`translate(${startX+li*itemW},${H-16})`}>
+              <line x1="0" x2="16" y1="5" y2="5" stroke={line.color} strokeWidth={line.w} strokeDasharray={line.dash}/>
+              <circle cx="8" cy="5" r="3" fill={line.color} stroke="#fff" strokeWidth="1"/>
+              <text x="20" y="8.5" fontSize="9" fontWeight="700" fill={line.color}>{line.label}</text>
+            </g>
+          ));
+        })()}
+      </svg>
+    );
+  }
+
+    // 점수 배지
+  const ScoreBadge=({val,type})=>{
+    if(val===null||val===undefined)return<span style={{color:"#ccc",fontSize:12}}>—</span>;
+    const colors={my:{bg:"#f0eaf8",color:"#5e3f9a"},top:{bg:"#e8f7ef",color:"#3b8a60"},avg:{bg:"#fef6e4",color:"#b07a28"}};
+    const c=colors[type]||colors.my;
+    return<span style={{background:c.bg,color:c.color,borderRadius:8,padding:"3px 8px",fontSize:12,fontWeight:700}}>{val}점</span>;
+  };
+
+  const RankBadge=({rank,total})=>{
+    if(rank===null||rank===undefined)return<span style={{color:"#ccc",fontSize:12}}>—</span>;
+    const pct=total?Math.round((1-(rank-1)/total)*100):null;
+    const color=rank===1?"#c05090":rank<=3?"#9b5cb8":"#5e3f9a";
+    const bg=rank===1?"#fce8f3":rank<=3?"#f0e8fc":"#ede5f8";
+    return(
+      <span style={{background:bg,color,borderRadius:8,padding:"3px 7px",fontSize:11,fontWeight:800,display:"inline-flex",alignItems:"center",gap:3}}>
+        {rank===1&&<span style={{fontSize:12}}>🥇</span>}
+        {rank===2&&<span style={{fontSize:12}}>🥈</span>}
+        {rank===3&&<span style={{fontSize:12}}>🥉</span>}
+        <span>{rank}등{total?"/"+total+"명":""}</span>
+        {pct!==null&&<span style={{fontSize:9,fontWeight:600,opacity:0.75}}>({pct}%)</span>}
+      </span>
+    );
+  };
+
+  // 부분 통계
+  const stats=(part)=>{
+    const myArr=records.map(r=>r[part]?.my).filter(v=>v!==null&&v!==undefined);
+    if(!myArr.length)return null;
+    const avg=Math.round(myArr.reduce((a,b)=>a+b,0)/myArr.length);
+    const best=Math.max(...myArr);
+    const latest=myArr[myArr.length-1];
+    return{avg,best,latest,cnt:myArr.length};
+  };
+  const sunStats=stats("sun");
+  const advStats=stats("adv");
+
+  return(
+    <div>
+      {/* 상단 요약 카드 */}
+      {(sunStats||advStats)&&(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+          {sunStats&&(
+            <div style={{background:"#f4eeff",borderRadius:14,padding:"12px 14px",border:"1.5px solid #ddd0f0"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.a2,marginBottom:6}}>📘 선행 내 평균</div>
+              <div style={{fontSize:24,fontWeight:900,color:C.a3}}>{sunStats.avg}<span style={{fontSize:12,fontWeight:600,color:C.sub}}>점</span></div>
+              <div style={{fontSize:10,color:C.sub,marginTop:3}}>최고 {sunStats.best}점 · 최근 {sunStats.latest}점</div>
+            </div>
+          )}
+          {advStats&&(
+            <div style={{background:"#e8f7ef",borderRadius:14,padding:"12px 14px",border:"1.5px solid #b4e5cb"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#3b8a60",marginBottom:6}}>📗 심화 내 평균</div>
+              <div style={{fontSize:24,fontWeight:900,color:"#2a6b47"}}>{advStats.avg}<span style={{fontSize:12,fontWeight:600,color:"#6aad8a"}}>점</span></div>
+              <div style={{fontSize:10,color:"#6aad8a",marginTop:3}}>최고 {advStats.best}점 · 최근 {advStats.latest}점</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 뷰 전환 */}
+      {records.length>0&&(
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          <button onClick={()=>setViewMode("table")} style={{flex:1,borderRadius:10,border:`1.5px solid ${viewMode==="table"?C.a1:C.br}`,background:viewMode==="table"?C.hd:"#fff",color:viewMode==="table"?C.a2:C.sub,fontWeight:700,fontSize:12,padding:"7px 0",cursor:"pointer"}}>📋 표</button>
+          <button onClick={()=>setViewMode("chart")} style={{flex:1,borderRadius:10,border:`1.5px solid ${viewMode==="chart"?C.a1:C.br}`,background:viewMode==="chart"?C.hd:"#fff",color:viewMode==="chart"?C.a2:C.sub,fontWeight:700,fontSize:12,padding:"7px 0",cursor:"pointer"}}>📈 그래프</button>
+        </div>
+      )}
+
+      {/* 그래프 뷰 */}
+      {viewMode==="chart"&&records.length>0&&(()=>{
+        // 월 필터 적용
+        const chartData=records.filter(r=>{
+          if(!r.date)return true;
+          const ym=r.date.slice(0,7); // "YYYY-MM"
+          if(chartFrom&&ym<chartFrom)return false;
+          if(chartTo&&ym>chartTo)return false;
+          return true;
+        });
+        // 기록에서 존재하는 월 목록 추출
+        const allMonths=[...new Set(records.map(r=>r.date?r.date.slice(0,7):"").filter(Boolean))].sort();
+        const monthSel=(val,setter,placeholder)=>(
+          <select value={val} onChange={e=>setter(e.target.value)}
+            style={{flex:1,borderRadius:9,border:`1.5px solid ${val?C.a1:C.br}`,padding:"7px 8px",fontSize:12,background:"#fff",color:val?C.tx:"#aaa",cursor:"pointer",appearance:"none",WebkitAppearance:"none",outline:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a8ab0'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 8px center",paddingRight:22}}>
+            <option value="">{placeholder}</option>
+            {allMonths.map(m=><option key={m} value={m}>{m.replace("-","년 ")}월</option>)}
+          </select>
+        );
+        return(
+          <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:14}}>
+            {/* 월 필터 */}
+            <div style={{background:"#fff",borderRadius:14,padding:"12px 14px",border:`1.5px solid ${C.br}`}}>
+              <div style={{fontSize:11,color:C.sub,fontWeight:700,marginBottom:8}}>📅 기간 선택</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {monthSel(chartFrom,setChartFrom,"시작 월")}
+                <span style={{color:"#ccc",fontSize:12,flexShrink:0}}>~</span>
+                {monthSel(chartTo,setChartTo,"종료 월")}
+                {(chartFrom||chartTo)&&<button onClick={()=>{setChartFrom("");setChartTo("");}} style={{flexShrink:0,borderRadius:8,border:`1px solid ${C.br}`,background:"#fff",color:C.sub,fontSize:11,fontWeight:700,padding:"7px 10px",cursor:"pointer"}}>초기화</button>}
+              </div>
+              {chartData.length>0&&<div style={{fontSize:10,color:C.sub,marginTop:6}}>{chartData.length}개 시험 표시 중</div>}
+            </div>
+            {/* 📘 선행 그래프 */}
+            <div style={{background:"#fff",borderRadius:16,padding:"16px 14px",border:"1.5px solid #ddd0f0",boxShadow:"0 2px 12px rgba(155,127,212,.07)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
+                <span style={{fontSize:13,fontWeight:800,color:C.a2}}>📘 선행</span>
+                <span style={{fontSize:10,color:C.sub,fontWeight:500}}>회차별 점수 추이</span>
+              </div>
+              <LineChart data={chartData} part="sun"/>
+            </div>
+            {/* 📗 심화 그래프 */}
+            <div style={{background:"#fff",borderRadius:16,padding:"16px 14px",border:"1.5px solid #b4e5cb",boxShadow:"0 2px 12px rgba(90,185,138,.07)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
+                <span style={{fontSize:13,fontWeight:800,color:"#27a06a"}}>📗 심화</span>
+                <span style={{fontSize:10,color:"#6aad8a",fontWeight:500}}>회차별 점수 추이</span>
+              </div>
+              <LineChart data={chartData} part="adv"/>
+            </div>
+            {/* 🏅 석차 그래프 */}
+            <div style={{background:"#fff",borderRadius:16,padding:"16px 14px",border:"1.5px solid #f0d8ee",boxShadow:"0 2px 12px rgba(192,80,144,.06)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:13,fontWeight:800,color:"#c05090"}}>🏅 석차 추이</span>
+                <span style={{fontSize:10,color:"#d088b8",fontWeight:500}}>상위 % 기준 · 선행/심화 통합</span>
+              </div>
+              <div style={{fontSize:10,color:"#ccc",marginBottom:10}}>선이 위로 올라갈수록 순위가 올라간 거예요 📈</div>
+              <RankChart data={chartData}/>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 표 뷰 */}
+      {viewMode==="table"&&(
+        <>
+          {loading&&<div style={{textAlign:"center",padding:"40px 0",color:C.sub,fontSize:14}}>불러오는 중... 🌱</div>}
+          {!loading&&records.length===0&&(
+            <div style={{textAlign:"center",padding:"60px 0"}}>
+              <div style={{fontSize:40}}>📝</div>
+              <div style={{marginTop:10,fontSize:14,color:"#bbb"}}>아직 시험 기록이 없어요</div>
+              <div style={{fontSize:12,marginTop:4,color:"#ccc"}}>아래 + 버튼으로 추가해보세요</div>
+            </div>
+          )}
+          {!loading&&records.length>0&&(
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {[...records].reverse().map(r=>(
+                <div key={r.fireId} style={{background:"#fff",borderRadius:14,padding:"14px",border:`1.5px solid ${C.br}`,boxShadow:"0 2px 10px rgba(155,127,212,.07)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <div>
+                      <span style={{fontWeight:800,fontSize:14,color:C.tx}}>{r.label||"시험"}</span>
+                      <span style={{marginLeft:8,fontSize:11,color:C.sub}}>{r.date.replace(/-/g,".")}</span>
+                      {(r.sun?.grade||r.sun?.bigChapter||r.adv?.grade||r.adv?.bigChapter)&&(
+                        <div style={{marginTop:5,display:"flex",flexDirection:"column",gap:3}}>
+                          {(r.sun?.grade||r.sun?.bigChapter)&&(
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                              <span style={{fontSize:9,color:C.a2,fontWeight:700}}>선행</span>
+                              {r.sun.grade&&<span style={{fontSize:9,background:C.hd,color:C.a2,borderRadius:5,padding:"1px 6px",fontWeight:700}}>{r.sun.grade}</span>}
+                              {r.sun.bigChapter&&<span style={{fontSize:9,background:"#f0eaf8",color:"#7c5cb8",borderRadius:5,padding:"1px 6px"}}>{r.sun.bigChapter}</span>}
+                              {r.sun.midChapter&&<span style={{fontSize:9,background:"#f5f5f5",color:"#999",borderRadius:5,padding:"1px 6px"}}>{r.sun.midChapter}</span>}
+                            </div>
+                          )}
+                          {(r.adv?.grade||r.adv?.bigChapter)&&(
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                              <span style={{fontSize:9,color:"#27a06a",fontWeight:700}}>심화</span>
+                              {r.adv.grade&&<span style={{fontSize:9,background:"#e8f7ef",color:"#27a06a",borderRadius:5,padding:"1px 6px",fontWeight:700}}>{r.adv.grade}</span>}
+                              {r.adv.bigChapter&&<span style={{fontSize:9,background:"#e0f5eb",color:"#3b8a60",borderRadius:5,padding:"1px 6px"}}>{r.adv.bigChapter}</span>}
+                              {r.adv.midChapter&&<span style={{fontSize:9,background:"#f5f5f5",color:"#999",borderRadius:5,padding:"1px 6px"}}>{r.adv.midChapter}</span>}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{display:"flex",gap:5}}>
+                      <button onClick={()=>openEdit(r)} style={{background:"#f0eaf8",border:"none",color:C.a2,cursor:"pointer",fontSize:11,fontWeight:700,borderRadius:8,padding:"5px 10px"}}>✏️ 수정</button>
+                      <button onClick={()=>handleDel(r.fireId)} style={{background:"#fdeaea",border:"none",color:"#c07070",cursor:"pointer",fontSize:11,fontWeight:700,borderRadius:8,padding:"5px 10px"}}>🗑️ 삭제</button>
+                    </div>
+                  </div>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:"#f8f5fc"}}>
+                        <th style={{padding:"6px 8px",color:C.sub,fontWeight:600,textAlign:"left",borderRadius:"8px 0 0 0",fontSize:11}}>구분</th>
+                        <th style={{padding:"6px 4px",color:"#5e3f9a",fontWeight:700,textAlign:"center",fontSize:11}}>내 점수</th>
+                        <th style={{padding:"6px 4px",color:"#3b8a60",fontWeight:700,textAlign:"center",fontSize:11}}>최고점</th>
+                        <th style={{padding:"6px 4px",color:"#b07a28",fontWeight:700,textAlign:"center",fontSize:11}}>평균</th>
+                        <th style={{padding:"6px 4px",color:"#c05090",fontWeight:700,textAlign:"center",fontSize:11,borderRadius:"0 8px 0 0"}}>석차</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {r.sun&&(r.sun.my!==null||r.sun.top!==null||r.sun.avg!==null)&&(
+                        <tr style={{borderTop:`1px solid #f0eaf8`}}>
+                          <td style={{padding:"8px 8px",fontWeight:700,color:C.a2,fontSize:12}}>📘 선행</td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.sun.my} type="my"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.sun.top} type="top"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.sun.avg} type="avg"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><RankBadge rank={r.sun.rank} total={r.sun.total}/></td>
+                        </tr>
+                      )}
+                      {r.adv&&(r.adv.my!==null||r.adv.top!==null||r.adv.avg!==null)&&(
+                        <tr style={{borderTop:`1px solid #e8f7ef`}}>
+                          <td style={{padding:"8px 8px",fontWeight:700,color:"#3b8a60",fontSize:12}}>📗 심화</td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.adv.my} type="my"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.adv.top} type="top"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><ScoreBadge val={r.adv.avg} type="avg"/></td>
+                          <td style={{padding:"8px 4px",textAlign:"center"}}><RankBadge rank={r.adv.rank} total={r.adv.total}/></td>
+                        </tr>
+                      )}
+                      {/* 순위 계산 (내점수/최고점 비율) */}
+                      {((r.sun?.my!=null&&r.sun?.top!=null)||(r.adv?.my!=null&&r.adv?.top!=null))?
+                        <tr style={{borderTop:`1px solid #f5f0ff`,background:"#faf8fc"}}>
+                          <td colSpan="5" style={{padding:"6px 8px",fontSize:10,color:C.sub}}>
+                            {r.sun?.my!=null&&r.sun?.top!=null&&`선행 최고대비 ${Math.round(r.sun.my/r.sun.top*100)}%`}
+                            {r.sun?.my!=null&&r.sun?.top!=null&&(r.adv?.my!=null||r.adv?.top!=null)&&"  ·  "}
+                            {r.adv?.my!=null&&r.adv?.top!=null&&`심화 최고대비 ${Math.round(r.adv.my/r.adv.top*100)}%`}
+                          </td>
+                        </tr>:null
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 추가 폼 */}
+      {showAdd&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div style={{background:"#fff",borderRadius:"24px 24px 0 0",padding:"24px 20px 36px",width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 -8px 40px rgba(0,0,0,0.15)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:800,fontSize:17,color:C.tx}}>{editTarget?"✏️ 시험 기록 수정":"🗒️ 시험 기록 추가"}</div>
+              <button onClick={()=>{setShowAdd(false);setEditTarget(null);resetForm();}} style={{background:"none",border:"none",fontSize:22,color:"#aaa",cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:C.sub,marginBottom:4}}>날짜</div>
+                <input type="date" value={fDate} onChange={e=>setFDate(e.target.value)} style={{...inp}}/>
+              </div>
+              <div style={{flex:1.4}}>
+                <div style={{fontSize:11,color:C.sub,marginBottom:4}}>시험 이름 (선택)</div>
+                <input
+                  lang="ko" inputMode="text" autoComplete="off"
+                  placeholder="예: 3월 3주차"
+                  value={fLabel} onChange={e=>setFLabel(e.target.value)} style={inp}/>
+              </div>
+            </div>
+
+            {/* 선행 */}
+            {(()=>{
+              const grades=(gradeOrder||[]).filter(g=>curriculum&&curriculum[g]);
+              const bigs=fSunGrade?Object.keys(curriculum[fSunGrade]?.chapters||{}):[];
+              const midSet=new Set();
+              if(fSunGrade&&fSunBig){Object.values(curriculum[fSunGrade]?.chapters?.[fSunBig]?.bookMids||{}).forEach(bk=>Object.keys(bk).forEach(m=>midSet.add(m)));}
+              const mids=[...midSet];
+              const ss=(on,border)=>({flex:1,borderRadius:8,border:`1.5px solid ${on?border:C.br}`,padding:"7px 8px",fontSize:11,background:"#fff",color:on?C.tx:"#bbb",cursor:"pointer",appearance:"none",WebkitAppearance:"none",outline:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a8ab0'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 6px center",paddingRight:20});
+              return(
+                <div style={{background:"#f4eeff",borderRadius:14,padding:"14px",marginBottom:12,border:`1.5px solid #ddd0f0`}}>
+                  <div style={{fontWeight:700,color:C.a2,fontSize:13,marginBottom:8}}>📘 선행</div>
+                  <div style={{display:"flex",gap:6,marginBottom:6}}>
+                    <select value={fSunGrade} onChange={e=>{setFSunGrade(e.target.value);setFSunBig("");setFSunMid("");}} style={ss(!!fSunGrade,C.a1)}>
+                      <option value="">학년</option>
+                      {grades.map(g=><option key={g} value={g}>{g}</option>)}
+                    </select>
+                    <select value={fSunBig} onChange={e=>{setFSunBig(e.target.value);setFSunMid("");}} disabled={!fSunGrade} style={ss(!!fSunBig,C.a1)}>
+                      <option value="">대단원</option>
+                      {bigs.map(b=><option key={b} value={b}>{b}</option>)}
+                    </select>
+                    {mids.length>0&&<select value={fSunMid} onChange={e=>setFSunMid(e.target.value)} style={ss(!!fSunMid,C.a1)}>
+                      <option value="">중단원</option>
+                      {mids.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>}
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+                    <div><div style={{fontSize:10,color:"#5e3f9a",fontWeight:700,marginBottom:4,textAlign:"center"}}>내 점수</div><input type="number" min="0" max="100" placeholder="—" value={fSunMy} onChange={e=>setFSunMy(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#3b8a60",fontWeight:700,marginBottom:4,textAlign:"center"}}>최고점</div><input type="number" min="0" max="100" placeholder="—" value={fSunTop} onChange={e=>setFSunTop(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#b07a28",fontWeight:700,marginBottom:4,textAlign:"center"}}>평균</div><input type="number" min="0" max="100" placeholder="—" value={fSunAvg} onChange={e=>setFSunAvg(e.target.value)} style={numInp}/></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div><div style={{fontSize:10,color:"#c05090",fontWeight:700,marginBottom:4,textAlign:"center"}}>🏅 내 등수</div><input type="number" min="1" placeholder="—" value={fSunRank} onChange={e=>setFSunRank(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#888",fontWeight:700,marginBottom:4,textAlign:"center"}}>👥 정원 (명)</div><input type="number" min="1" placeholder="—" value={fSunTotal} onChange={e=>setFSunTotal(e.target.value)} style={numInp}/></div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* 심화 */}
+            {(()=>{
+              const grades=(gradeOrder||[]).filter(g=>curriculum&&curriculum[g]);
+              const bigs=fAdvGrade?Object.keys(curriculum[fAdvGrade]?.chapters||{}):[];
+              const midSet=new Set();
+              if(fAdvGrade&&fAdvBig){Object.values(curriculum[fAdvGrade]?.chapters?.[fAdvBig]?.bookMids||{}).forEach(bk=>Object.keys(bk).forEach(m=>midSet.add(m)));}
+              const mids=[...midSet];
+              const ss=(on)=>({flex:1,borderRadius:8,border:`1.5px solid ${on?"#5ab98a":C.br}`,padding:"7px 8px",fontSize:11,background:"#fff",color:on?C.tx:"#bbb",cursor:"pointer",appearance:"none",WebkitAppearance:"none",outline:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a8ab0'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 6px center",paddingRight:20});
+              return(
+                <div style={{background:"#e8f7ef",borderRadius:14,padding:"14px",marginBottom:20,border:`1.5px solid #b4e5cb`}}>
+                  <div style={{fontWeight:700,color:"#3b8a60",fontSize:13,marginBottom:8}}>📗 심화</div>
+                  <div style={{display:"flex",gap:6,marginBottom:6}}>
+                    <select value={fAdvGrade} onChange={e=>{setFAdvGrade(e.target.value);setFAdvBig("");setFAdvMid("");}} style={ss(!!fAdvGrade)}>
+                      <option value="">학년</option>
+                      {grades.map(g=><option key={g} value={g}>{g}</option>)}
+                    </select>
+                    <select value={fAdvBig} onChange={e=>{setFAdvBig(e.target.value);setFAdvMid("");}} disabled={!fAdvGrade} style={ss(!!fAdvBig)}>
+                      <option value="">대단원</option>
+                      {bigs.map(b=><option key={b} value={b}>{b}</option>)}
+                    </select>
+                    {mids.length>0&&<select value={fAdvMid} onChange={e=>setFAdvMid(e.target.value)} style={ss(!!fAdvMid)}>
+                      <option value="">중단원</option>
+                      {mids.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>}
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+                    <div><div style={{fontSize:10,color:"#5e3f9a",fontWeight:700,marginBottom:4,textAlign:"center"}}>내 점수</div><input type="number" min="0" max="100" placeholder="—" value={fAdvMy} onChange={e=>setFAdvMy(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#3b8a60",fontWeight:700,marginBottom:4,textAlign:"center"}}>최고점</div><input type="number" min="0" max="100" placeholder="—" value={fAdvTop} onChange={e=>setFAdvTop(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#b07a28",fontWeight:700,marginBottom:4,textAlign:"center"}}>평균</div><input type="number" min="0" max="100" placeholder="—" value={fAdvAvg} onChange={e=>setFAdvAvg(e.target.value)} style={numInp}/></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div><div style={{fontSize:10,color:"#c05090",fontWeight:700,marginBottom:4,textAlign:"center"}}>🏅 내 등수</div><input type="number" min="1" placeholder="—" value={fAdvRank} onChange={e=>setFAdvRank(e.target.value)} style={numInp}/></div>
+                    <div><div style={{fontSize:10,color:"#888",fontWeight:700,marginBottom:4,textAlign:"center"}}>👥 정원 (명)</div><input type="number" min="1" placeholder="—" value={fAdvTotal} onChange={e=>setFAdvTotal(e.target.value)} style={numInp}/></div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <button onClick={handleSave} disabled={saving} style={{width:"100%",borderRadius:14,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"14px 0",fontWeight:800,fontSize:15,cursor:"pointer",opacity:saving?0.7:1}}>
+              {saving?"저장 중...":(editTarget?"수정 완료 🌱":"저장하기 🌱")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FAB */}
+      <div style={{position:"fixed",bottom:28,right:24}}>
+        <button onClick={()=>setShowAdd(true)} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",fontSize:26,fontWeight:900,cursor:"pointer",boxShadow:"0 6px 22px rgba(155,127,212,.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[cards,setCards]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[fbReady,setFbReady]=useState(!!window.__fbReady);
+  const[curriculum,setCurriculum]=useState(DEFAULT_CURRICULUM);
+  const[gradeOrder,setGradeOrder]=useState(DEFAULT_GRADE_ORDER);
+  const[curriculumLoaded,setCurriculumLoaded]=useState(false);
+  const[tab,setTab]=useState("note");
+  const[view,setView]=useState("list");const[ac,setAc]=useState(null);const[ec,setEc]=useState(null);
+  const[fT,setFT]=useState("all");const[fG,setFG]=useState("all");const[fB,setFB]=useState("all");
+  const[fD,setFD]=useState("all");const[fBig,setFBig]=useState("all");const[fSub,setFSub]=useState("all");
+  const[checked,setChecked]=useState(new Set());const[selectMode,setSelectMode]=useState(false);
+
+  const saveAll=(cur,ord)=>{setCurriculum(cur);setGradeOrder(ord);saveCurriculum(cur,ord);};
+
+  useEffect(()=>{
+    // 모바일: 이미 준비됐으면 바로, 아니면 이벤트+폴링으로 대기
+    if(window.__fbReady){setFbReady(true);return;}
+    const h=()=>{if(window.__fbReady)setFbReady(true);};
+    window.addEventListener("fbReady",h);
+    const poll=setInterval(()=>{if(window.__fbReady){setFbReady(true);clearInterval(poll);}},500);
+    return()=>{window.removeEventListener("fbReady",h);clearInterval(poll);};
+  },[]);
+  useEffect(()=>{
+    if(!fbReady||curriculumLoaded)return;
+    // Firebase에서 저장된 curriculum 불러오기 (덮어쓰지 않음!)
+    loadCurriculum().then(result=>{
+      if(result){setCurriculum(result.cur);setGradeOrder(result.order||Object.keys(result.cur));}
+      setCurriculumLoaded(true);
+    });
+  },[fbReady,curriculumLoaded]);
+  useEffect(()=>{
+    if(!fbReady)return;
+    const{collection,onSnapshot,query,orderBy}=window.__fb;
+    const q=query(collection(window.__db,"cards"),orderBy("createdAt","desc"));
+    const unsub=onSnapshot(q,snap=>{setCards(snap.docs.map(d=>({...d.data(),fireId:d.id})));setLoading(false);},()=>setLoading(false));
+    return unsub;
+  },[fbReady]);
+
+  const add=()=>setView("list");
+  const upd=(id,t,history)=>{setCards(p=>p.map(c=>c.id===id?{...c,mistakeType:t,reviewCount:(c.reviewCount||0)+1,lastReview:new Date().toLocaleDateString("ko-KR"),reviewHistory:history||(c.reviewHistory||[])}:c));setView("list");};
+  const updCard=(updated)=>{setCards(p=>p.map(c=>c.id===updated.id?updated:c));setView("list");setEc(null);};
+  const del=async(fireId,id)=>{
+    if(!window.confirm("삭제할까요?"))return;
+    try{const{doc,deleteDoc}=window.__fb;await deleteDoc(doc(window.__db,"cards",fireId));}catch(e){console.error(e);}
+    setCards(p=>p.filter(c=>c.id!==id));
+  };
+
+  const fil=cards.filter(c=>{
+    if(fT!=="all"&&c.mistakeType!==fT)return false;
+    if(fG!=="all"&&c.grade!==fG)return false;
+    if(fB!=="all"&&c.book!==fB)return false;
+    if(fD!=="all"&&c.difficulty!==fD)return false;
+    if(fBig!=="all"&&(c.grade+"__"+c.bigChapter)!==fBig)return false;
+    if(fSub!=="all"&&c.subChapter!==fSub)return false;
+    if(fT==="all"&&c.mistakeType==="solved")return false;
+    return true;
+  });
+  const hiddenSolvedCount=cards.filter(c=>{
+    if(c.mistakeType!=="solved")return false;
+    if(fG!=="all"&&c.grade!==fG)return false;
+    if(fB!=="all"&&c.book!==fB)return false;
+    if(fD!=="all"&&c.difficulty!==fD)return false;
+    if(fBig!=="all"&&(c.grade+"__"+c.bigChapter)!==fBig)return false;
+    if(fSub!=="all"&&c.subChapter!==fSub)return false;
+    return true;
+  }).length;
+  const toggleCheck=id=>setChecked(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});
+  const checkedCards=cards.filter(c=>checked.has(c.id));
+  const toggleAll=()=>{
+    if(fil.every(c=>checked.has(c.id)))setChecked(p=>{const n=new Set(p);fil.forEach(c=>n.delete(c.id));return n;});
+    else setChecked(p=>{const n=new Set(p);fil.forEach(c=>n.add(c.id));return n;});
+  };
+  const allChecked=fil.length>0&&fil.every(c=>checked.has(c.id));
+
+  if(view==="add")return<div style={{minHeight:"100vh",background:C.bg,padding:"24px 16px"}}><Add onAdd={add} onCancel={()=>setView("list")} curriculum={curriculum} gradeOrder={gradeOrder}/></div>;
+  if(view==="edit"&&ec)return<div style={{minHeight:"100vh",background:C.bg,padding:"24px 16px"}}><Edit card={ec} onCancel={()=>{setView("list");setEc(null);}} onSave={updCard} curriculum={curriculum} gradeOrder={gradeOrder}/></div>;
+  if(view==="flash"&&ac)return<div style={{minHeight:"100vh",background:C.bg,padding:"24px 16px"}}><Flash card={ac} onBack={()=>setView("list")} onUpdate={upd}/></div>;
+
+  const TABS=[{id:"note",label:"📓 오답노트"},{id:"exam",label:"🏆 시험기록"},{id:"diary",label:"📖 공부일기"},{id:"progress",label:"📚 진도체크"},{id:"accuracy",label:"📊 정답률"},{id:"manage",label:"⚙️ 교재관리"}];
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{background:"linear-gradient(135deg,#e8dff5 0%,#d4c8ee 50%,#c8b8e8 100%)",padding:"20px 20px 0"}}>
+        <div style={{maxWidth:480,margin:"0 auto"}}>
+          <div style={{fontSize:11,letterSpacing:2,color:"#2d1f4a",marginBottom:2}}>수학천재 김서윤 🌱</div>
+          <div style={{fontSize:20,fontWeight:900,color:C.tx,marginBottom:14}}>
+            {tab==="note"?"오답노트":tab==="exam"?"시험 기록":tab==="diary"?"공부 일기":tab==="progress"?"진도 체크":tab==="accuracy"?"정답률 확인":"교재 관리"}
+          </div>
+          <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",gap:2}}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)}
+                style={{flexShrink:0,padding:"8px 10px",border:"none",background:tab===t.id?"#fff":"transparent",color:tab===t.id?C.a2:C.tx,fontWeight:tab===t.id?800:600,fontSize:11,cursor:"pointer",borderRadius:tab===t.id?"12px 12px 0 0":"0",opacity:tab===t.id?1:0.7,transition:"all 0.2s",lineHeight:1.3,textAlign:"center",whiteSpace:"nowrap"}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:480,margin:"0 auto",padding:"14px 16px"}}>
+        {tab==="note"&&<>
+          <div style={{display:"flex",gap:7,marginBottom:14}}>
+            {[{label:"전체",val:cards.length,color:C.a3},{label:"모름",val:cards.filter(c=>c.mistakeType==="wrong").length,color:"#e07a7a"},{label:"애매함",val:cards.filter(c=>c.mistakeType==="unsure").length,color:"#d4a04a"},{label:"계산실수",val:cards.filter(c=>c.mistakeType==="calc").length,color:"#9b7fd4"},{label:"완료",val:cards.filter(c=>c.mistakeType==="solved").length,color:"#5ab98a"}].map(s=>(
+              <div key={s.label} style={{textAlign:"center",background:"rgba(255,255,255,0.85)",borderRadius:10,padding:"7px 4px",flex:1,boxShadow:"0 1px 6px rgba(155,127,212,.08)"}}>
+                <div style={{fontSize:16,fontWeight:900,color:s.color}}>{s.val}</div>
+                <div style={{fontSize:9,color:"#2d1f4a"}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          {loading&&<div style={{textAlign:"center",padding:"40px 0",color:C.sub,fontSize:14}}>불러오는 중... 🌱</div>}
+          {!loading&&<>
+            {(hiddenSolvedCount>0||fT==="solved")&&<button onClick={()=>{if(fT==="solved"){setFT("all");setShowSolved(false);}else{setFT("solved");setShowSolved(true);}}} style={{width:"100%",marginBottom:12,borderRadius:10,border:`1.5px solid #5ab98a`,background:fT==="solved"?"#e6f7ef":"#fff",padding:"8px 14px",fontWeight:700,fontSize:13,cursor:"pointer",color:"#3b8a60",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <span>✅ 완료된 문제 {fT==="solved"?fil.length:hiddenSolvedCount}개</span>
+              <span style={{fontSize:11}}>{fT==="solved"?"목록으로 ▲":"보기 ▼"}</span>
+            </button>}
+            <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+              <FilterDrop value={fG} options={[{val:"all",label:"학기 전체"},...gradeOrder.filter(g=>curriculum[g]).map(g=>({val:g,label:g}))]} onChange={v=>{setFG(v);setFBig("all");setFSub("all");}} placeholder="학기 전체"/>
+              <FilterDrop value={fB} options={[{val:"all",label:"교재 전체"},...Array.from(new Set(gradeOrder.filter(g=>curriculum[g]&&(fG==="all"||g===fG)).flatMap(g=>curriculum[g].books||[]))).map(b=>({val:b,label:b}))]} onChange={setFB} placeholder="교재 전체"/>
+              <FilterDrop value={fD} options={[{val:"all",label:"난이도 전체"},...DIF.map(d=>({val:d,label:d+"단계"}))]} onChange={setFD} placeholder="난이도 전체"/>
+              <FilterDrop value={fT} options={[{val:"all",label:"유형 전체"},...MT.map(t=>({val:t.id,label:t.label}))]} onChange={setFT} placeholder="유형 전체"/>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:10}}>
+              <FilterDrop value={fBig} options={[{val:"all",label:"단원 전체"},...cards.filter(c=>fG==="all"||c.grade===fG).reduce((acc,c)=>{const key=c.grade+"__"+c.bigChapter;if(c.bigChapter&&!acc.find(x=>x.val===key))acc.push({val:key,label:c.grade+" · "+c.bigChapter});return acc;},[])]} onChange={v=>{setFBig(v);setFSub("all");}} placeholder="단원 전체"/>
+              <FilterDrop value={fSub} options={[{val:"all",label:"소단원 전체"},...Array.from(new Set(cards.filter(c=>(fG==="all"||c.grade===fG)&&(fBig==="all"||(c.grade+"__"+c.bigChapter)===fBig)&&(fB==="all"||c.book===fB)&&c.subChapter).map(c=>c.subChapter))).map(s=>({val:s,label:s}))]} onChange={setFSub} placeholder="소단원 전체"/>
+            </div>
+            {fil.length>0&&<div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
+              <button onClick={()=>{setSelectMode(s=>!s);setChecked(new Set());}} style={{borderRadius:10,border:`1.5px solid ${selectMode?C.a1:C.br}`,background:selectMode?C.hd:"#fff",padding:"7px 14px",fontWeight:700,fontSize:13,cursor:"pointer",color:selectMode?C.a2:C.sub,display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:15}}>{selectMode?"✓":"☐"}</span> 출력
+              </button>
+              {selectMode&&<button onClick={toggleAll} style={{borderRadius:10,border:`1.5px solid ${C.br}`,background:"#fff",padding:"7px 12px",fontWeight:600,fontSize:12,cursor:"pointer",color:C.sub}}>{allChecked?"전체 해제":"전체 선택"}</button>}
+              {!selectMode&&<button onClick={()=>doPrint(fil)} style={{flex:1,borderRadius:10,border:`1.5px solid ${C.a2}`,background:"#fff",padding:"7px 14px",fontWeight:700,fontSize:13,cursor:"pointer",color:C.a3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>{/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)?"🖨️ 전체 "+fil.length+"개 이미지저장":"🖨️ 전체 "+fil.length+"개 PDF저장"}</button>}
+            </div>}
+            {fil.length===0?<div style={{textAlign:"center",padding:"60px 0"}}><div style={{fontSize:40}}>🌱</div><div style={{marginTop:10,fontSize:14,color:"#bbb"}}>저장된 문제가 없어요</div><div style={{fontSize:12,marginTop:4,color:"#ccc"}}>아래 + 버튼으로 추가해보세요</div></div>
+            :<div style={{display:"flex",flexDirection:"column",gap:11,paddingBottom:checked.size>0?80:0}}>
+              {fil.map(card=>(
+                <div key={card.id} onClick={selectMode?()=>toggleCheck(card.id):undefined}
+                  style={{background:checked.has(card.id)?"#f0eaf8":C.card,borderRadius:16,padding:14,boxShadow:"0 2px 12px rgba(155,127,212,.08)",display:"flex",gap:12,alignItems:"flex-start",border:`1.5px solid ${checked.has(card.id)?C.a1:C.br}`,cursor:selectMode?"pointer":"default"}}>
+                  {selectMode&&<div style={{width:22,height:22,borderRadius:6,border:`2px solid ${checked.has(card.id)?C.a1:C.br}`,background:checked.has(card.id)?C.a1:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}>{checked.has(card.id)&&<span style={{color:"#fff",fontSize:13,fontWeight:900}}>✓</span>}</div>}
+                  <img src={card.img} style={{width:78,height:78,objectFit:"cover",objectPosition:"left top",borderRadius:10,border:`1px solid ${C.br}`,flexShrink:0}}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:4}}>
+                      <span style={{fontSize:10,fontWeight:700,color:"#5e3f9a",background:C.hd,borderRadius:6,padding:"1px 7px"}}>{card.grade}</span>
+                      <span style={{fontSize:10,color:"#7c5cb8",background:"#ede5f8",borderRadius:6,padding:"1px 7px"}}>{card.book}</span>
+                    </div>
+                    <div style={{fontSize:10,color:"#888",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      {[card.bigChapter,card.midChapter,card.subChapter].filter(Boolean).join(" › ")}
+                    </div>
+                    <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}><DB diff={card.difficulty}/><Tag type={card.mistakeType}/></div>
+                    {card.memo&&<div style={{fontSize:11,color:C.sub,marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📝 {card.memo}</div>}
+                    <div style={{fontSize:10,color:"#ccc",marginTop:3}}>{card.date} · 복습 {card.reviewCount||0}회{card.lastReview?` · 최근 ${card.lastReview}`:""}</div>
+                    {(card.reviewHistory&&card.reviewHistory.length>0)&&<div style={{display:"flex",gap:3,marginTop:5,flexWrap:"wrap"}}>
+                      {card.reviewHistory.map((h,i)=>{const r=RH[h.result]||RH.wrong;return<span key={i} title={`복습${i+1} · ${h.date} · ${r.label}`} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:"50%",background:r.bg,color:r.color,fontSize:9,fontWeight:900,border:`1px solid ${r.color}44`}}>{r.icon}</span>;})}
+                    </div>}
+                  </div>
+                  {!selectMode&&<div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
+                    <button onClick={()=>{setAc(card);setView("flash");}} style={{borderRadius:10,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"7px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>풀기</button>
+                    <button onClick={()=>{setEc(card);setView("edit");}} style={{borderRadius:10,border:`1.5px solid ${C.a1}`,background:"#fff",color:C.a2,padding:"6px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>수정</button>
+                    <button onClick={()=>del(card.fireId,card.id)} style={{borderRadius:10,border:`1px solid ${C.br}`,background:"#fff",color:"#c07030",padding:"6px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>삭제</button>
+                  </div>}
+                </div>
+              ))}
+            </div>}
+          </>}
+        </>}
+
+        {tab==="exam"&&<ExamTracker curriculum={curriculum} gradeOrder={gradeOrder}/>}
+        {tab==="diary"&&<StudyDiary/>}
+        {tab==="progress"&&<ProgressChecker cards={cards} curriculum={curriculum} gradeOrder={gradeOrder}/>}
+        {tab==="accuracy"&&<AccuracyTracker curriculum={curriculum} gradeOrder={gradeOrder}/>}
+        {tab==="manage"&&<CurriculumManager curriculum={curriculum} gradeOrder={gradeOrder} onSave={saveAll}/>}
+      </div>
+
+      {tab==="note"&&selectMode&&checked.size>0&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:`1.5px solid ${C.br}`,padding:"12px 20px",boxShadow:"0 -4px 20px rgba(0,0,0,0.10)",zIndex:100}}>
+          <div style={{maxWidth:480,margin:"0 auto"}}>
+            <button onClick={()=>doPrint(checkedCards)} style={{width:"100%",borderRadius:12,border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",padding:"13px 0",fontWeight:800,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              {/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)?"🖨️ 선택한 "+checked.size+"개 이미지저장":"🖨️ 선택한 "+checked.size+"개 PDF저장"}
+            </button>
+          </div>
+        </div>
+      )}
+      {tab==="note"&&<div style={{position:"fixed",bottom:28,right:24}}>
+        <button onClick={()=>setView("add")} style={{width:56,height:56,borderRadius:"50%",border:"none",background:`linear-gradient(135deg,${C.a1},${C.a2})`,color:"#fff",fontSize:26,fontWeight:900,cursor:"pointer",boxShadow:"0 6px 22px rgba(155,127,212,.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+      </div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
